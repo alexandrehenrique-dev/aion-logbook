@@ -1,0 +1,71 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.cache/
+.parcel-cache/
+
+# Env files
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Java / Spring Boot
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven / Gradle
+.mvn/wrapper/maven-wrapper.jar
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Spring local configs
+application-local.yml
+application-local.yaml
+application-dev-local.yml
+application-dev-local.yaml
+application-secret.yml
+application-secret.yaml
+
+# Keycloak / Docker local
+keycloak-data/
+postgres-data/
+pgdata/
+docker-data/
+*.db
+
+# Docker overrides
+docker-compose.override.yml
+
+# Test / reports
+test-results/
+playwright-report/
+cypress/videos/
+cypress/screenshots/
+
+# Temporary
+tmp/
+temp/

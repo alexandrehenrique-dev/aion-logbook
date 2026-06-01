@@ -1,0 +1,172 @@
+// Domain contracts for Aion Logbook — aligned with future Spring Boot backend
+
+export type PlanStatus =
+  | 'DRAFT'
+  | 'SCHEDULED'
+  | 'PENDING'
+  | 'DUE'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'PARTIAL'
+  | 'POSTPONED'
+  | 'IGNORED'
+  | 'CANCELED'
+  | 'MISSED';
+
+export const PLAN_STATUS_LABEL: Record<PlanStatus, string> = {
+  DRAFT: 'Rascunho',
+  SCHEDULED: 'Agendado',
+  PENDING: 'Pendente',
+  DUE: 'Chegou a hora',
+  IN_PROGRESS: 'Em andamento',
+  COMPLETED: 'Concluído',
+  PARTIAL: 'Feito parcialmente',
+  POSTPONED: 'Reagendado',
+  IGNORED: 'Ignorado por escolha',
+  CANCELED: 'Cancelado',
+  MISSED: 'Ficou para trás',
+};
+
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export const PRIORITY_LABEL: Record<Priority, string> = {
+  LOW: 'Baixa',
+  MEDIUM: 'Média',
+  HIGH: 'Alta',
+  CRITICAL: 'Crítica',
+};
+
+export type Direction = {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  status: 'ACTIVE' | 'ARCHIVED';
+  identityPhrase?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Plan = {
+  id: string;
+  userId: string;
+  directionId?: string;
+  title: string;
+  description?: string;
+  type?: string;
+  priority: Priority;
+  status: PlanStatus;
+  plannedDate?: string;
+  plannedStartAt?: string;
+  plannedEndAt?: string;
+  estimatedMinutes?: number;
+  notify?: boolean;
+  notificationDateTime?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  actualMinutes?: number;
+  reason?: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+  lastStatusChangedAt?: string;
+};
+
+export type SessionLog = {
+  id: string;
+  userId: string;
+  planId?: string;
+  directionId?: string;
+  startedAt: string;
+  finishedAt?: string;
+  durationMinutes: number;
+  result?: string;
+  notes?: string;
+  createdAt: string;
+};
+
+export type PlanEvent = {
+  id: string;
+  userId: string;
+  planId: string;
+  eventType: string;
+  fromStatus?: PlanStatus;
+  toStatus?: PlanStatus;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type LogEntry = {
+  id: string;
+  userId: string;
+  directionId?: string;
+  planId?: string;
+  title: string;
+  content: string;
+  type: 'REFLECTION' | 'SYNTHESIS' | 'LEARNING' | 'BLOCKER' | 'DECISION' | 'IDEA' | 'FEEDBACK';
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AuthUser = {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+};
+
+export type DashboardToday = {
+  date: string;
+  greeting: string;
+  plansInProgress: Plan[];
+  plansDue: Plan[];
+  plansMissed: Plan[];
+  plansCompleted: Plan[];
+  totalEnergyMinutes: number;
+  completionRate: number;
+};
+
+export type AnalyticsOverview = {
+  totalTimeMinutes: number;
+  completionRate: number;
+  plansCreated: number;
+  plansCompleted: number;
+  activeDirections: number;
+  weeklyTimeMinutes?: number;
+};
+
+export type AnalyticsByDay = {
+  day: string;
+  planned: number;
+  executed: number;
+};
+
+export type AnalyticsStatusDistribution = {
+  status: PlanStatus;
+  count: number;
+};
+
+export type AnalyticsTimeByDirection = {
+  directionId: string;
+  directionName: string;
+  color?: string;
+  totalMinutes: number;
+};
+
+// Generic API response wrappers
+export type ApiResponse<T> = {
+  data: T;
+  success: boolean;
+  message?: string;
+};
+
+export type PaginatedResponse<T> = {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+};

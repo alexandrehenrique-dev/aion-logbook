@@ -1,0 +1,282 @@
+import {
+  Bell,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  PauseCircle,
+  TrendingUp,
+  XCircle,
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { Card } from '../components/Card';
+import { dashboardService } from '../../services/dashboardService';
+import type { DashboardToday } from '../../types';
+import { PLAN_STATUS_LABEL } from '../../types';
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="animate-pulse space-y-6">
+      <div className="h-8 bg-muted rounded w-64" />
+      <div className="h-32 bg-muted rounded-xl" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 h-64 bg-muted rounded-xl" />
+        <div className="space-y-4">
+          <div className="h-32 bg-muted rounded-xl" />
+          <div className="h-32 bg-muted rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function Dashboard() {
+  const [data, setData] = useState<DashboardToday | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    dashboardService.getToday()
+      .then(setData)
+      .catch(() => setError('Não foi possível carregar o dashboard.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const greeting = getGreeting();
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+        <DashboardSkeleton />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 text-center">
+        <p className="text-muted-foreground">{error ?? 'Erro inesperado.'}</p>
+      </div>
+    );
+  }
+
+  const currentFocus = data.plansInProgress[0] ?? data.plansDue[0] ?? null;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+        {/* Hero */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-10"
+        >
+          <div className="flex flex-wrap items-baseline gap-3 mb-2">
+            <h2 className="text-2xl md:text-3xl font-medium text-foreground">{greeting}</h2>
+            <span className="text-muted-foreground text-sm md:text-base">
+              {new Date().toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+            </span>
+          </div>
+          <p className="text-base md:text-lg text-muted-foreground mt-3 mb-6">
+            O que merece sua energia agora?
+          </p>
+
+          {currentFocus && (
+            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm text-muted-foreground mb-1">{PLAN_STATUS_LABEL[currentFocus.status]}</p>
+                  <h3 className="text-lg md:text-xl font-medium text-foreground mb-1 truncate">{currentFocus.title}</h3>
+                  {currentFocus.directionId && (
+                    <p className="text-sm text-muted-foreground">Direção: {currentFocus.directionId}</p>
+                  )}
+                </div>
+                {currentFocus.estimatedMinutes && (
+                  <div className="text-right shrink-0">
+                    <p className="text-xl md:text-2xl font-medium text-primary">
+                      {Math.floor(currentFocus.estimatedMinutes / 60)}h
+                      {currentFocus.estimatedMinutes % 60 > 0 && `${currentFocus.estimatedMinutes % 60}min`}
+                    </p>
+                    <p className="text-sm text-muted-foreground">planejadas</p>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+        </motion.div>
+
+        {/* Main grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+          {/* Timeline */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="lg:col-span-2 space-y-6"
+          >
+            <h3 className="text-lg md:text-xl font-medium text-foreground flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Timeline do dia
+            </h3>
+
+            <Card>
+              {[...data.plansInProgress, ...data.plansDue, ...data.plansMissed, ...data.plansCompleted].length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano para hoje.</p>
+              ) : (
+                <div className="space-y-4">
+                  {[...data.plansInProgress, ...data.plansDue, ...data.plansMissed, ...data.plansCompleted].map((plan, index) => (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.08 }}
+                      className="flex items-start gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
+                    >
+                      <div className="w-14 text-xs text-muted-foreground shrink-0 pt-1">
+                        {plan.plannedStartAt
+                          ? new Date(plan.plannedStartAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                          : '--:--'}
+                      </div>
+                      <div
+                        className={`w-1 rounded-full shrink-0 self-stretch min-h-[20px] ${
+                          plan.status === 'COMPLETED' ? 'bg-emerald-500' :
+                          plan.status === 'IN_PROGRESS' ? 'bg-primary' :
+                          plan.status === 'MISSED' ? 'bg-destructive/50' :
+                          plan.status === 'DUE' ? 'bg-amber-500' : 'bg-border'
+                        }`}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-foreground mb-0.5 text-sm md:text-base truncate">{plan.title}</h4>
+                        <p className="text-xs text-muted-foreground">{PLAN_STATUS_LABEL[plan.status]}</p>
+                      </div>
+                      {plan.status === 'COMPLETED' && <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />}
+                      {plan.status === 'IN_PROGRESS' && <Clock className="w-5 h-5 text-primary shrink-0 animate-pulse mt-0.5" />}
+                      {plan.status === 'MISSED' && <XCircle className="w-5 h-5 text-destructive/50 shrink-0 mt-0.5" />}
+                      {plan.status === 'DUE' && <Bell className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />}
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </motion.div>
+
+          {/* Side cards */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="space-y-4 md:space-y-6"
+          >
+            {data.plansDue.length > 0 && (
+              <Card hover>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-foreground flex items-center gap-2 text-sm">
+                    <Clock className="w-4 h-4 text-amber-500" />
+                    Chegou a hora
+                  </h4>
+                  <span className="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                    {data.plansDue.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {data.plansDue.map((p) => (
+                    <div key={p.id} className="text-sm">
+                      <p className="text-foreground font-medium truncate">{p.title}</p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {data.plansMissed.length > 0 && (
+              <Card hover>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-foreground flex items-center gap-2 text-sm">
+                    <PauseCircle className="w-4 h-4 text-destructive/70" />
+                    Ficou para trás
+                  </h4>
+                  <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">
+                    {data.plansMissed.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {data.plansMissed.map((p) => (
+                    <div key={p.id} className="text-sm">
+                      <p className="text-foreground font-medium truncate">{p.title}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3 italic">Mas ainda pode ser resgatado</p>
+              </Card>
+            )}
+
+            {data.plansCompleted.length > 0 && (
+              <Card hover>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-foreground flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    Concluídos
+                  </h4>
+                  <span className="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">
+                    {data.plansCompleted.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {data.plansCompleted.map((p) => (
+                    <div key={p.id} className="text-sm">
+                      <p className="text-foreground font-medium truncate">{p.title}</p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            <Card className="bg-gradient-to-br from-muted/30 to-transparent">
+              <h4 className="font-medium text-foreground mb-3 flex items-center gap-2 text-sm">
+                <TrendingUp className="w-4 h-4" />
+                Resumo
+              </h4>
+              <div className="space-y-2.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Energia investida</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {Math.floor(data.totalEnergyMinutes / 60)}h{data.totalEnergyMinutes % 60}min
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Taxa de conclusão</span>
+                  <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                    {data.completionRate}%
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="mt-10 md:mt-12 text-center"
+        >
+          <p className="text-sm text-muted-foreground italic">
+            "Ainda há tempo para recuperar direção. Nem tudo precisa ser feito hoje."
+          </p>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

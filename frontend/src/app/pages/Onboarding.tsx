@@ -3,8 +3,8 @@ import { motion } from 'motion/react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/Button';
-
-const ONBOARDING_KEY = 'aion:onboarding-completed';
+import { useAuth } from '../../features/auth/AuthContext';
+import { onboardingService } from '../../services/onboardingService';
 
 const SUGGESTED_DIRECTIONS = [
   { id: 'studies', label: 'Estudos', icon: Book },
@@ -17,6 +17,7 @@ const SUGGESTED_DIRECTIONS = [
 
 export function Onboarding() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [selectedDirections, setSelectedDirections] = useState<string[]>([]);
 
@@ -28,8 +29,9 @@ export function Onboarding() {
 
   const handleNext = () => {
     if (step === 4) {
-      // Mark onboarding as completed so Login redirects to /dashboard next time
-      localStorage.setItem(ONBOARDING_KEY, 'true');
+      if (user) {
+        onboardingService.markCompleted(user.id);
+      }
       navigate('/dashboard');
     } else {
       setStep((prev) => prev + 1);

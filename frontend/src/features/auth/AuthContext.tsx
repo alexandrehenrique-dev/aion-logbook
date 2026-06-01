@@ -1,7 +1,23 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { authService } from '../../services/authService';
-import { isMockAuthMode } from '../../config/env';
+import { isMockAuthMode, isKeycloakAuthMode } from '../../config/env';
 import type { AuthUser } from '../../types';
+import {
+  getKeycloakToken,
+  initKeycloak,
+  keycloakLogin,
+  keycloakLogout,
+  mapKeycloakUser,
+} from './keycloakClient';
+import { registerTokenGetter } from '../../lib/http/httpClient';
 
 const STORAGE_KEY = 'aion:auth-user';
 
@@ -20,7 +36,7 @@ type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -28,12 +44,32 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'loading' });
+  const kcInitRef = useRef(false);
 
   useEffect(() => {
+    if (isKeycloakAuthMode) {
+      // Guard against React StrictMode double-invocation
+      if (kcInitRef.current) return;
+      kcInitRef.current = true;
+
+      initKeycloak()
+        .then((authenticated) => {
+          if (authenticated) {
+            registerTokenGetter(getKeycloakToken);
+            setState({ status: 'authenticated', user: mapKeycloakUser() });
+          } else {
+            setState({ status: 'unauthenticated' });
+          }
+        })
+        .catch(() => setState({ status: 'unauthenticated' }));
+      return;
+    }
+
+    // mock mode: restore from sessionStorage
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        setState({ status: 'authenticated', user: JSON.parse(stored) });
+        setState({ status: 'authenticated', user: JSON.parse(stored) as AuthUser });
       } catch {
         setState({ status: 'unauthenticated' });
       }
@@ -42,26 +78,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    if (isMockAuthMode) {
-      // In mock mode, accept any credentials and return the dev user
-      void email; void password;
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(MOCK_DEV_USER));
-      setState({ status: 'authenticated', user: MOCK_DEV_USER });
+  const login = useCallback(async () => {
+    if (isKeycloakAuthMode) {
+      // Redirects browser to Keycloak — never returns
+      await keycloakLogin();
       return;
     }
 
-    // TODO: replace with Keycloak flow when VITE_AUTH_MODE=keycloak
-    const { user } = await authService.login({ email, password });
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    setState({ status: 'authenticated', user });
+    // mock mode (isMockAuthMode) — aceita qualquer coisa, retorna usuário dev
+    void isMockAuthMode;
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(MOCK_DEV_USER));
+    setState({ status: 'authenticated', user: MOCK_DEV_USER });
   }, []);
 
   const logout = useCallback(async () => {
+    if (isKeycloakAuthMode) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      await keycloakLogout(window.location.origin + '/login');
+      return;
+    }
+
     try {
       await authService.logout();
     } catch {
-      // ignore logout errors
+      // ignore
     }
     sessionStorage.removeItem(STORAGE_KEY);
     setState({ status: 'unauthenticated' });

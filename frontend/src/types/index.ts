@@ -119,6 +119,15 @@ export type AuthUser = {
   avatar?: string;
 };
 
+// Perfil retornado pelo backend (GET /users/me) quando VITE_API_MODE=real.
+// Inclui estado da aplicação além do que o token Keycloak carrega.
+export type UserProfile = {
+  id: string;
+  name: string;
+  email: string;
+  onboardingCompleted: boolean;
+};
+
 export type DashboardToday = {
   date: string;
   greeting: string;

@@ -1,26 +1,43 @@
 import { Compass } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/Button';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useAuth } from '../../features/auth/AuthContext';
-
-const ONBOARDING_KEY = 'aion:onboarding-completed';
+import { resolvePostLoginRoute } from '../../features/auth/resolvePostLoginRoute';
 
 export function Login() {
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const [isEntering, setIsEntering] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Redireciona após autenticação bem-sucedida (mock) ou retorno do Keycloak.
+  // A decisão de rota é centralizada em resolvePostLoginRoute, nunca aqui.
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    resolvePostLoginRoute(user).then((route) => {
+      navigate(route, { replace: true });
+    });
+  }, [isAuthenticated, user, navigate]);
+
+  // Enquanto o AuthProvider inicializa (ex: Keycloak processando o callback)
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   const handleEnter = async () => {
     setIsEntering(true);
     setError(null);
     try {
-      await login('dev@aion.app', 'mock');
-      const onboardingDone = localStorage.getItem(ONBOARDING_KEY) === 'true';
-      navigate(onboardingDone ? '/dashboard' : '/onboarding');
+      await login();
+      // Em modo mock: login() completa aqui e o useEffect acima redireciona.
+      // Em modo keycloak: login() redireciona o browser — nunca chega aqui.
     } catch {
       setError('Não foi possível entrar. Tente novamente.');
       setIsEntering(false);

@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { AuthProvider } from '../features/auth/AuthContext';
 import { ThemeProvider } from './providers/ThemeProvider';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { MainLayout } from './layouts/MainLayout';
 import { Login } from './pages/Login';
 import { Onboarding } from './pages/Onboarding';
@@ -23,17 +24,88 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/onboarding" element={<Onboarding />} />
 
-            <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
-            <Route path="/plans" element={<MainLayout><Plans /></MainLayout>} />
-            <Route path="/plans/:id" element={<MainLayout><PlanDetail /></MainLayout>} />
-            <Route path="/directions" element={<MainLayout><Directions /></MainLayout>} />
-            <Route path="/directions/:id" element={<MainLayout><DirectionDetail /></MainLayout>} />
-            <Route path="/analytics" element={<MainLayout><Analytics /></MainLayout>} />
-            <Route path="/sessions" element={<MainLayout><Sessions /></MainLayout>} />
-            <Route path="/calendar" element={<MainLayout><Calendar /></MainLayout>} />
-            <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
+            <Route
+              path="/onboarding"
+              element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <MainLayout><Dashboard /></MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/plans"
+              element={
+                <ProtectedRoute>
+                  <MainLayout><Plans /></MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/plans/:id"
+              element={
+                <ProtectedRoute>
+                  <MainLayout><PlanDetail /></MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/directions"
+              element={
+                <ProtectedRoute>
+                  <MainLayout><Directions /></MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/directions/:id"
+              element={
+                <ProtectedRoute>
+                  <MainLayout><DirectionDetail /></MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <MainLayout><Analytics /></MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sessions"
+              element={
+                <ProtectedRoute>
+                  <MainLayout><Sessions /></MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute>
+                  <MainLayout><Calendar /></MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <MainLayout><Settings /></MainLayout>
+                </ProtectedRoute>
+              }
+            />
 
             <Route path="/showcase" element={<ComponentShowcase />} />
           </Routes>

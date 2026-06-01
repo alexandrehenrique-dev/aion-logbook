@@ -11,13 +11,20 @@ class ApiError extends Error {
   }
 }
 
+let _tokenGetter: (() => string | undefined) | null = null;
+
+export function registerTokenGetter(fn: () => string | undefined): void {
+  _tokenGetter = fn;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${env.apiBaseUrl}${path}`;
+  const token = _tokenGetter?.();
 
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
-      // TODO: inject Bearer token from Keycloak when authMode === 'keycloak'
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
     ...init,

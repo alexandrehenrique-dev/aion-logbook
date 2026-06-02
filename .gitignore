@@ -7,6 +7,7 @@ Thumbs.db
 *.iml
 *.iws
 *.ipr
+out/
 
 # IDE - VS Code
 .vscode/
@@ -35,6 +36,16 @@ coverage/
 .env.*
 !.env.example
 !.env.local.example
+
+# Backend / Java / Maven
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/logs/
+backend/*.log
+backend/coverage/
+backend/.jacoco/
+backend/jacoco.exec
+backend/target/site/jacoco/
 
 # Java / Spring Boot
 target/

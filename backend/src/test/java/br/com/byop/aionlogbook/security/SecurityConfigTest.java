@@ -1,5 +1,6 @@
 package br.com.byop.aionlogbook.security;
 
+import br.com.byop.aionlogbook.direction.infrastructure.DirectionRepository;
 import br.com.byop.aionlogbook.identity.application.UserProfileService;
 import br.com.byop.aionlogbook.identity.domain.UserProfile;
 import br.com.byop.aionlogbook.shared.time.TimeProvider;
@@ -43,6 +44,9 @@ class SecurityConfigTest {
 
     @MockitoBean
     private TimeProvider timeProvider;
+
+    @MockitoBean
+    private DirectionRepository directionRepository;
 
     @Nested
     class ApiV1 {

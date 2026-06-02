@@ -14,6 +14,7 @@ logs/
 *.iml
 *.iws
 *.ipr
+out/
 .vscode/
 .project
 .classpath

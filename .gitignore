@@ -2,10 +2,16 @@
 .DS_Store
 Thumbs.db
 
-# Editors / IDEs
+# IDE - IntelliJ
 .idea/
-.vscode/
 *.iml
+*.iws
+*.ipr
+
+# IDE - VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
 
 # Logs
 *.log
@@ -45,8 +51,13 @@ target/
 # Spring local configs
 application-local.yml
 application-local.yaml
+!application-local.example.yml
+!application-local.example.yaml
+application-local-override.yml
 application-dev-local.yml
 application-dev-local.yaml
+application-*.local.yml
+application-*.local.yaml
 application-secret.yml
 application-secret.yaml
 
@@ -61,6 +72,9 @@ docker-data/
 docker-compose.override.yml
 
 # Test / reports
+coverage/
+.jacoco/
+jacoco.exec
 test-results/
 playwright-report/
 cypress/videos/
@@ -69,3 +83,6 @@ cypress/screenshots/
 # Temporary
 tmp/
 temp/
+*.tmp
+*.swp
+*.swo

@@ -1,51 +1,169 @@
 package br.com.byop.aionlogbook.shared.error;
 
-import br.com.byop.aionlogbook.shared.logging.CorrelationIdFilter;
-import br.com.byop.aionlogbook.shared.time.TimeProvider;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private final TimeProvider timeProvider;
+    private static final String REQUEST_ID_MDC_KEY = "requestId";
+    private static final String REDACTED_VALUE = "[REDACTED]";
+    private static final Set<String> SENSITIVE_FIELD_TOKENS = Set.of(
+            "authorization",
+            "credential",
+            "email",
+            "jwt",
+            "password",
+            "secret",
+            "senha",
+            "token"
+    );
 
-    public GlobalExceptionHandler(TimeProvider timeProvider) {
-        this.timeProvider = timeProvider;
+    private final Clock clock;
+
+    public GlobalExceptionHandler(Clock clock) {
+        this.clock = clock;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException exception, HttpServletRequest request) {
-        List<FieldErrorResponse> fields = exception.getBindingResult()
+    public ResponseEntity<ApiErrorResponse> handleValidation(
+            MethodArgumentNotValidException exception,
+            HttpServletRequest request
+    ) {
+        List<ApiFieldError> details = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(error -> new FieldErrorResponse(error.getField(), error.getDefaultMessage()))
+                .map(this::toApiFieldError)
                 .toList();
 
-        return build(HttpStatus.BAD_REQUEST, "Validation failed", request, fields);
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                ErrorCode.VALIDATION_ERROR,
+                "Existem campos inválidos.",
+                request,
+                details
+        );
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleNotFound(
+            ResourceNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                ErrorCode.RESOURCE_NOT_FOUND,
+                exception.getMessage(),
+                request,
+                List.of()
+        );
+    }
+
+    @ExceptionHandler(InvalidTransitionException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidTransition(
+            InvalidTransitionException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                ErrorCode.INVALID_TRANSITION,
+                exception.getMessage(),
+                request,
+                List.of()
+        );
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleConflict(
+            ConflictException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                ErrorCode.CONFLICT,
+                exception.getMessage(),
+                request,
+                List.of()
+        );
+    }
+
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ApiErrorResponse> handleBusinessRule(
+            BusinessRuleException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                ErrorCode.BUSINESS_RULE_VIOLATION,
+                exception.getMessage(),
+                request,
+                List.of()
+        );
     }
 
     @ExceptionHandler(Exception.class)
-    ResponseEntity<ApiErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected internal error", request, List.of());
+    public ResponseEntity<ApiErrorResponse> handleUnexpected(
+            Exception exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ErrorCode.INTERNAL_ERROR,
+                "Erro interno inesperado.",
+                request,
+                List.of()
+        );
     }
 
-    private ResponseEntity<ApiErrorResponse> build(HttpStatus status, String message, HttpServletRequest request, List<FieldErrorResponse> fields) {
+    private ApiFieldError toApiFieldError(FieldError fieldError) {
+        return new ApiFieldError(
+                fieldError.getField(),
+                fieldError.getDefaultMessage(),
+                sanitizedRejectedValue(fieldError)
+        );
+    }
+
+    private Object sanitizedRejectedValue(FieldError fieldError) {
+        if (fieldError.getRejectedValue() == null) {
+            return null;
+        }
+
+        String fieldName = fieldError.getField().toLowerCase(Locale.ROOT);
+        boolean sensitiveField = SENSITIVE_FIELD_TOKENS.stream().anyMatch(fieldName::contains);
+
+        return sensitiveField ? REDACTED_VALUE : fieldError.getRejectedValue();
+    }
+
+    private ResponseEntity<ApiErrorResponse> buildResponse(
+            HttpStatus status,
+            ErrorCode code,
+            String message,
+            HttpServletRequest request,
+            List<ApiFieldError> details
+    ) {
         ApiErrorResponse body = new ApiErrorResponse(
-                timeProvider.now(),
+                Instant.now(clock),
                 status.value(),
                 status.getReasonPhrase(),
+                code.name(),
                 message,
                 request.getRequestURI(),
-                request.getHeader(CorrelationIdFilter.CORRELATION_ID_HEADER),
-                fields
+                MDC.get(REQUEST_ID_MDC_KEY),
+                details
         );
+
         return ResponseEntity.status(status).body(body);
     }
 }

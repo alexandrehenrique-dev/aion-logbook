@@ -102,6 +102,62 @@ O login real acontece no frontend via Keycloak/PKCE. O backend atua como OAuth2 
 
 Rotas publicas como `/actuator/health`, `/index.html`, assets da SPA e Swagger em `local`/`dev` nao exigem JWT. Rotas `/api/v1/**` exigem Bearer Token e devem retornar `401` quando chamadas sem token.
 
+## Shared Foundation
+
+A camada `shared` concentra infraestrutura transversal reutilizavel pelo backend.
+
+### Recursos implementados
+
+- erro padronizado via `ApiErrorResponse`;
+- enum `ErrorCode`;
+- exceptions compartilhadas;
+- `GlobalExceptionHandler`;
+- paginacao via `PageResponse<T>`;
+- filtro `RequestIdFilter`;
+- header `X-Request-Id`;
+- `requestId` no MDC para rastreabilidade;
+- configuracao de tempo via `Clock.systemUTC()`.
+
+### Contrato de erro
+
+Exemplo:
+
+```json
+{
+  "timestamp": "2026-06-02T12:00:00Z",
+  "status": 404,
+  "error": "Not Found",
+  "code": "RESOURCE_NOT_FOUND",
+  "message": "Recurso nao encontrado.",
+  "path": "/api/example",
+  "requestId": "req-123",
+  "details": []
+}
+```
+
+Erros de validacao retornam `details` por campo. Valores rejeitados de campos sensiveis, como senha, token, segredo, credencial, autorizacao, JWT ou e-mail, sao mascarados.
+
+Mapeamentos principais:
+
+- `MethodArgumentNotValidException`: `400 VALIDATION_ERROR`;
+- `ResourceNotFoundException`: `404 RESOURCE_NOT_FOUND`;
+- `InvalidTransitionException`: `400 INVALID_TRANSITION`;
+- `ConflictException`: `409 CONFLICT`;
+- `BusinessRuleException`: `422 BUSINESS_RULE_VIOLATION`;
+- erro inesperado: `500 INTERNAL_ERROR`, sem vazar mensagem sensivel.
+
+### Request ID
+
+Toda requisicao deve retornar o header:
+
+```http
+X-Request-Id: <uuid-ou-id-informado>
+```
+
+Quando o cliente envia `X-Request-Id`, o backend reaproveita o valor. Quando o cliente nao envia, ou envia valor em branco, o backend gera um UUID.
+
+O valor tambem e registrado no MDC como `requestId`. O filtro adiciona `method` e `path` ao MDC durante a requisicao e limpa esses valores ao final.
+
 ## Endpoint /api/v1/me
 
 `GET /api/v1/me` retorna o perfil interno do usuario autenticado. O perfil fica em `user_profiles` e e criado no primeiro acesso a partir das claims do JWT.
@@ -142,7 +198,13 @@ curl -i \
 Os testes usam Testcontainers, entao o Docker precisa estar ativo.
 
 ```bash
-mvn clean test
+mvn test
+```
+
+Se o Maven Wrapper for adicionado ao repositorio, o comando equivalente e:
+
+```bash
+./mvnw test
 ```
 
 ## Padrao do projeto

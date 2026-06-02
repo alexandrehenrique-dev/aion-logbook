@@ -1,0 +1,56 @@
+# Build
+target/
+*.class
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+logs/
+*.log
+
+# IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+!application-local.example.yml
+!application-local.example.yaml
+application-*.local.yml
+application-*.local.yaml
+application-secret.yml
+application-secret.yaml
+
+# Test / coverage
+coverage/
+htmlcov/
+.jacoco/
+jacoco.exec
+target/site/jacoco/
+
+# Runtime
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo

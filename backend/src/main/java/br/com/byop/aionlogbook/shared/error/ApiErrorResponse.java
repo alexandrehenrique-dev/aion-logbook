@@ -1,15 +1,16 @@
 package br.com.byop.aionlogbook.shared.error;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public record ApiErrorResponse(
-        OffsetDateTime timestamp,
+        Instant timestamp,
         int status,
         String error,
+        String code,
         String message,
         String path,
-        String correlationId,
-        List<FieldErrorResponse> fields
+        String requestId,
+        List<ApiFieldError> details
 ) {
 }

@@ -4,9 +4,12 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "tsc -b && vite build",
     "dev": "vite",
-    "lint": "eslint ."
+    "build": "tsc -b && vite build",
+    "build:backend": "node scripts/build-for-backend.mjs",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "typecheck": "tsc -b"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

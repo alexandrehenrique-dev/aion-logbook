@@ -1,6 +1,6 @@
 export const env = {
   apiMode: import.meta.env.VITE_API_MODE ?? 'mock',
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? '/api',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? '/api/v1',
   authMode: import.meta.env.VITE_AUTH_MODE ?? 'mock',
   keycloakEnabled: import.meta.env.VITE_KEYCLOAK_ENABLED === 'true',
   keycloakUrl: import.meta.env.VITE_KEYCLOAK_URL as string | undefined,

@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bug, X } from 'lucide-react';
-import { http } from '../../lib/http/httpClient';
+import { bugReportService } from '../../services/bugReportService';
+import type { BugReportSeverity } from '../../services/bugReportService';
 
-type Severity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-
-const SEVERITY_LABELS: Record<Severity, string> = {
+const SEVERITY_LABELS: Record<BugReportSeverity, string> = {
   LOW: 'Baixa',
   MEDIUM: 'Média',
   HIGH: 'Alta',
@@ -15,7 +14,7 @@ const SEVERITY_LABELS: Record<Severity, string> = {
 type BugReportForm = {
   title: string;
   description: string;
-  severity: Severity;
+  severity: BugReportSeverity;
   context: string;
 };
 
@@ -36,8 +35,7 @@ export function BugReportModal({ onClose }: Props) {
 
     setStatus('submitting');
     try {
-      // TODO: integrar report de bugs com webhook do Telegram no backend.
-      await http.post('/bug-report', { ...form, url: window.location.href, timestamp: new Date().toISOString() });
+      await bugReportService.create({ ...form, url: window.location.href, timestamp: new Date().toISOString() });
       setStatus('success');
       setTimeout(onClose, 1500);
     } catch {
@@ -105,7 +103,7 @@ export function BugReportModal({ onClose }: Props) {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Severidade</label>
                 <div className="grid grid-cols-4 gap-2">
-                  {(Object.keys(SEVERITY_LABELS) as Severity[]).map((s) => (
+                  {(Object.keys(SEVERITY_LABELS) as BugReportSeverity[]).map((s) => (
                     <button
                       key={s}
                       type="button"

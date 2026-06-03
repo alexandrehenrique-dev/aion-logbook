@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Bell,
+  BookMarked,
   BookOpen,
   Bug,
   Calendar as CalendarIcon,
@@ -21,23 +22,41 @@ import { NavLink, useNavigate } from 'react-router';
 import { useAuth } from '../../features/auth/AuthContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { BugReportModal } from '../../features/bug-report/BugReportModal';
+import { notificationService } from '../../services/notificationService';
+import type { AppNotification } from '../../services/notificationService';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/plans', label: 'Planos', icon: BookOpen },
   { path: '/directions', label: 'Direções', icon: Compass },
+  { path: '/logbook', label: 'Logbook', icon: BookMarked },
   { path: '/analytics', label: 'Observatório', icon: BarChart3 },
   { path: '/sessions', label: 'Sessões', icon: Clock },
   { path: '/calendar', label: 'Calendário', icon: CalendarIcon },
 ];
 
-const mockNotifications = [
-  { id: '1', title: 'Chegou a hora', description: 'Revisar projeto cliente — 11:00', type: 'due', unread: true },
-  { id: '2', title: 'Em andamento', description: 'Estudar React avançado — 09:00', type: 'in_progress', unread: true },
-  { id: '3', title: 'Concluído ontem', description: 'Leitura filosófica', type: 'completed', unread: false },
-];
-
 function NotificationPanel({ onClose }: { onClose: () => void }) {
+  const [notifs, setNotifs] = useState<AppNotification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    notificationService.list()
+      .then(setNotifs)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleMarkAllRead = async () => {
+    await notificationService.markAllRead();
+    setNotifs((prev) => prev.map((n) => ({ ...n, unread: false })));
+  };
+
+  const handleMarkRead = async (id: string) => {
+    await notificationService.markRead(id);
+    setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, unread: false } : n));
+  };
+
+  const unread = notifs.filter((n) => n.unread).length;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8, scale: 0.97 }}
@@ -48,27 +67,37 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
     >
       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground">Notificações</h3>
-        <button onClick={onClose} className="p-1 rounded hover:bg-muted transition-colors">
-          <X className="w-3 h-3 text-muted-foreground" />
-        </button>
+        <div className="flex items-center gap-2">
+          {unread > 0 && (
+            <button onClick={handleMarkAllRead} className="text-xs text-primary hover:underline">
+              Marcar todas
+            </button>
+          )}
+          <button onClick={onClose} className="p-1 rounded hover:bg-muted transition-colors">
+            <X className="w-3 h-3 text-muted-foreground" />
+          </button>
+        </div>
       </div>
       <div className="max-h-72 overflow-y-auto">
-        {mockNotifications.length === 0 ? (
+        {loading ? (
+          <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
+        ) : notifs.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">Nenhuma notificação</p>
         ) : (
-          mockNotifications.map((n) => (
+          notifs.map((n) => (
             <div
               key={n.id}
-              className={`px-4 py-3 border-b border-border last:border-0 flex gap-3 ${
-                n.unread ? 'bg-primary/5' : ''
-              }`}
+              onClick={() => n.unread && handleMarkRead(n.id)}
+              className={`px-4 py-3 border-b border-border last:border-0 flex gap-3 cursor-pointer hover:bg-muted/30 transition-colors ${n.unread ? 'bg-primary/5' : ''}`}
             >
               {n.type === 'due' && <Clock className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />}
               {n.type === 'in_progress' && <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0 animate-pulse" />}
               {n.type === 'completed' && <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />}
+              {n.type === 'missed' && <Clock className="w-4 h-4 text-destructive/70 mt-0.5 shrink-0" />}
+              {n.type === 'info' && <Bell className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
               <div className="min-w-0">
                 <p className="text-xs font-medium text-foreground truncate">{n.title}</p>
-                <p className="text-xs text-muted-foreground truncate">{n.description}</p>
+                {n.description && <p className="text-xs text-muted-foreground truncate">{n.description}</p>}
               </div>
               {n.unread && <span className="ml-auto w-2 h-2 rounded-full bg-primary mt-1 shrink-0" />}
             </div>
@@ -125,9 +154,16 @@ export function MainLayout({ children }: { children: ReactNode }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [bugReportOpen, setBugReportOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    notificationService.list()
+      .then((notifs) => setUnreadCount(notifs.filter((n) => n.unread).length))
+      .catch(() => {});
+  }, []);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -138,8 +174,6 @@ export function MainLayout({ children }: { children: ReactNode }) {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
-
-  const unreadCount = mockNotifications.filter((n) => n.unread).length;
 
   const SidebarContent = () => (
     <>

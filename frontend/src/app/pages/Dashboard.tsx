@@ -9,9 +9,11 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Card } from '../components/Card';
 import { dashboardService } from '../../services/dashboardService';
-import type { DashboardToday } from '../../types';
+import { directionService } from '../../services/directionService';
+import type { DashboardToday, Direction } from '../../types';
 import { PLAN_STATUS_LABEL } from '../../types';
 
 function getGreeting() {
@@ -38,16 +40,20 @@ function DashboardSkeleton() {
 }
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const [data, setData] = useState<DashboardToday | null>(null);
+  const [directions, setDirections] = useState<Direction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    dashboardService.getToday()
-      .then(setData)
+    Promise.all([dashboardService.getToday(), directionService.list()])
+      .then(([d, dirs]) => { setData(d); setDirections(dirs); })
       .catch(() => setError('Não foi possível carregar o dashboard.'))
       .finally(() => setLoading(false));
   }, []);
+
+  const dirMap = Object.fromEntries(directions.map((d) => [d.id, d]));
 
   const greeting = getGreeting();
 
@@ -94,13 +100,20 @@ export function Dashboard() {
           </p>
 
           {currentFocus && (
-            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <Card
+              hover
+              className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent cursor-pointer"
+              onClick={() => navigate(`/plans/${currentFocus.id}`)}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-sm text-muted-foreground mb-1">{PLAN_STATUS_LABEL[currentFocus.status]}</p>
                   <h3 className="text-lg md:text-xl font-medium text-foreground mb-1 truncate">{currentFocus.title}</h3>
-                  {currentFocus.directionId && (
-                    <p className="text-sm text-muted-foreground">Direção: {currentFocus.directionId}</p>
+                  {currentFocus.directionId && dirMap[currentFocus.directionId] && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full inline-block" style={{ background: dirMap[currentFocus.directionId].color ?? '#888' }} />
+                      {dirMap[currentFocus.directionId].name}
+                    </p>
                   )}
                 </div>
                 {currentFocus.estimatedMinutes && (
@@ -142,7 +155,8 @@ export function Dashboard() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.08 }}
-                      className="flex items-start gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
+                      className="flex items-start gap-4 pb-4 border-b border-border last:border-0 last:pb-0 hover:bg-muted/30 -mx-2 px-2 rounded-lg cursor-pointer transition-colors"
+                      onClick={() => navigate(`/plans/${plan.id}`)}
                     >
                       <div className="w-14 text-xs text-muted-foreground shrink-0 pt-1">
                         {plan.plannedStartAt
@@ -159,7 +173,12 @@ export function Dashboard() {
                       />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-foreground mb-0.5 text-sm md:text-base truncate">{plan.title}</h4>
-                        <p className="text-xs text-muted-foreground">{PLAN_STATUS_LABEL[plan.status]}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {plan.directionId && dirMap[plan.directionId]
+                            ? `${dirMap[plan.directionId].name} · `
+                            : ''}
+                          {PLAN_STATUS_LABEL[plan.status]}
+                        </p>
                       </div>
                       {plan.status === 'COMPLETED' && <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />}
                       {plan.status === 'IN_PROGRESS' && <Clock className="w-5 h-5 text-primary shrink-0 animate-pulse mt-0.5" />}
@@ -192,8 +211,11 @@ export function Dashboard() {
                 </div>
                 <div className="space-y-2">
                   {data.plansDue.map((p) => (
-                    <div key={p.id} className="text-sm">
+                    <div key={p.id} className="text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded-lg transition-colors" onClick={() => navigate(`/plans/${p.id}`)}>
                       <p className="text-foreground font-medium truncate">{p.title}</p>
+                      {p.directionId && dirMap[p.directionId] && (
+                        <p className="text-xs text-muted-foreground">{dirMap[p.directionId].name}</p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -213,8 +235,11 @@ export function Dashboard() {
                 </div>
                 <div className="space-y-2">
                   {data.plansMissed.map((p) => (
-                    <div key={p.id} className="text-sm">
+                    <div key={p.id} className="text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded-lg transition-colors" onClick={() => navigate(`/plans/${p.id}`)}>
                       <p className="text-foreground font-medium truncate">{p.title}</p>
+                      {p.directionId && dirMap[p.directionId] && (
+                        <p className="text-xs text-muted-foreground">{dirMap[p.directionId].name}</p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -235,8 +260,11 @@ export function Dashboard() {
                 </div>
                 <div className="space-y-2">
                   {data.plansCompleted.map((p) => (
-                    <div key={p.id} className="text-sm">
+                    <div key={p.id} className="text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded-lg transition-colors" onClick={() => navigate(`/plans/${p.id}`)}>
                       <p className="text-foreground font-medium truncate">{p.title}</p>
+                      {p.directionId && dirMap[p.directionId] && (
+                        <p className="text-xs text-muted-foreground">{dirMap[p.directionId].name}</p>
+                      )}
                     </div>
                   ))}
                 </div>

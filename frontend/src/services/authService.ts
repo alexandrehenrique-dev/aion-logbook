@@ -8,5 +8,5 @@ export const authService = {
 
   // Usado futuramente quando o Spring Security estiver disponível
   // para enriquecer os dados do perfil além do que está no token.
-  me: () => http.get<AuthUser>('/user/me'),
+  me: () => http.get<AuthUser>('/me'),
 };

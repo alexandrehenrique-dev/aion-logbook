@@ -135,6 +135,10 @@ export type DashboardToday = {
   plansDue: Plan[];
   plansMissed: Plan[];
   plansCompleted: Plan[];
+  plansPending?: Plan[];
+  activeDirections?: number;
+  lastSessions?: SessionLog[];
+  lastLogEntries?: LogEntry[];
   totalEnergyMinutes: number;
   completionRate: number;
 };
@@ -150,6 +154,7 @@ export type AnalyticsOverview = {
 
 export type AnalyticsByDay = {
   day: string;
+  date?: string;
   planned: number;
   executed: number;
 };
@@ -157,6 +162,7 @@ export type AnalyticsByDay = {
 export type AnalyticsStatusDistribution = {
   status: PlanStatus;
   count: number;
+  percentage?: number;
 };
 
 export type AnalyticsTimeByDirection = {
@@ -173,9 +179,12 @@ export type ApiResponse<T> = {
   message?: string;
 };
 
-export type PaginatedResponse<T> = {
+export type PageResponse<T> = {
   data: T[];
-  total: number;
   page: number;
   pageSize: number;
+  total: number;
+  totalPages: number;
 };
+
+export type PaginatedResponse<T> = PageResponse<T>;

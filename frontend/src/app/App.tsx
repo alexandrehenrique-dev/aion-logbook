@@ -14,6 +14,7 @@ import { Analytics } from './pages/Analytics';
 import { Sessions } from './pages/Sessions';
 import { Calendar } from './pages/Calendar';
 import { Settings } from './pages/Settings';
+import { Logbook } from './pages/Logbook';
 import { ComponentShowcase } from './pages/ComponentShowcase';
 
 export default function App() {
@@ -95,6 +96,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <MainLayout><Calendar /></MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/logbook"
+              element={
+                <ProtectedRoute>
+                  <MainLayout><Logbook /></MainLayout>
                 </ProtectedRoute>
               }
             />

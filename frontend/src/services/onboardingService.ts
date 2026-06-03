@@ -1,16 +1,20 @@
-const storageKey = (userId: string) => `aion:onboarding-completed:${userId}`;
+import { http } from '../lib/http/httpClient';
+
+export type OnboardingStatus = {
+  completed: boolean;
+};
+
+export type OnboardingDirectionInput = {
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  identityPhrase?: string;
+};
 
 export const onboardingService = {
-  isCompleted(userId: string): boolean {
-    return localStorage.getItem(storageKey(userId)) === 'true';
-  },
-
-  markCompleted(userId: string): void {
-    localStorage.setItem(storageKey(userId), 'true');
-  },
-
-  // Útil para testes e para resetar onboarding em desenvolvimento
-  reset(userId: string): void {
-    localStorage.removeItem(storageKey(userId));
-  },
+  getStatus: () => http.get<OnboardingStatus>('/onboarding/status'),
+  createDirections: (directions: OnboardingDirectionInput[]) =>
+    http.post<void>('/onboarding/directions', { directions }),
+  complete: () => http.post<void>('/onboarding/complete'),
 };

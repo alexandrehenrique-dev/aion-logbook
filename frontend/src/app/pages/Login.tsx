@@ -17,7 +17,7 @@ export function Login() {
   // A decisão de rota é centralizada em resolvePostLoginRoute, nunca aqui.
   useEffect(() => {
     if (!isAuthenticated || !user) return;
-    resolvePostLoginRoute(user).then((route) => {
+    resolvePostLoginRoute().then((route) => {
       navigate(route, { replace: true });
     });
   }, [isAuthenticated, user, navigate]);

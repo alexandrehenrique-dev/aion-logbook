@@ -3,38 +3,52 @@ import { motion } from 'motion/react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/Button';
-import { useAuth } from '../../features/auth/AuthContext';
 import { onboardingService } from '../../services/onboardingService';
 
 const SUGGESTED_DIRECTIONS = [
-  { id: 'studies', label: 'Estudos', icon: Book },
-  { id: 'career', label: 'Carreira', icon: Briefcase },
-  { id: 'writing', label: 'Escrita', icon: PenLine },
-  { id: 'projects', label: 'Projetos', icon: Lightbulb },
-  { id: 'health', label: 'Saúde', icon: Heart },
-  { id: 'philosophy', label: 'Filosofia', icon: TrendingUp },
+  { id: 'studies', label: 'Estudos', name: 'Estudos', description: 'Crescimento intelectual e aprendizado contínuo', color: '#6366f1', icon: 'book', component: Book },
+  { id: 'career', label: 'Carreira', name: 'Carreira', description: 'Desenvolvimento profissional e projetos', color: '#0ea5e9', icon: 'briefcase', component: Briefcase },
+  { id: 'writing', label: 'Escrita', name: 'Escrita', description: 'Registro, criação e elaboração de ideias', color: '#f59e0b', icon: 'pen-line', component: PenLine },
+  { id: 'projects', label: 'Projetos', name: 'Projetos', description: 'Criação e construção de ideias', color: '#8b5cf6', icon: 'lightbulb', component: Lightbulb },
+  { id: 'health', label: 'Saúde', name: 'Saúde', description: 'Corpo, mente e equilíbrio pessoal', color: '#22c55e', icon: 'heart', component: Heart },
+  { id: 'philosophy', label: 'Filosofia', name: 'Filosofia', description: 'Reflexão, sentido e visão de mundo', color: '#ec4899', icon: 'trending-up', component: TrendingUp },
 ];
 
 export function Onboarding() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [step, setStep] = useState(1);
-  const [selectedDirections, setSelectedDirections] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const toggleDirection = (id: string) => {
-    setSelectedDirections((prev) =>
+    setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]
     );
   };
 
-  const handleNext = () => {
-    if (step === 4) {
-      if (user) {
-        onboardingService.markCompleted(user.id);
-      }
-      navigate('/dashboard');
-    } else {
+  const handleNext = async () => {
+    if (step < 4) {
       setStep((prev) => prev + 1);
+      return;
+    }
+
+    // Final step: call HTTP onboarding service
+    setSubmitting(true);
+    try {
+      const selectedDirections = SUGGESTED_DIRECTIONS
+        .filter((d) => selectedIds.includes(d.id))
+        .map((d) => ({ name: d.name, description: d.description, color: d.color, icon: d.icon }));
+
+      if (selectedDirections.length > 0) {
+        await onboardingService.createDirections(selectedDirections);
+      }
+      await onboardingService.complete();
+      navigate('/dashboard');
+    } catch {
+      // On error, proceed anyway in mock mode
+      navigate('/dashboard');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -42,13 +56,7 @@ export function Onboarding() {
     switch (step) {
       case 1:
         return (
-          <motion.div
-            key="step-1"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="text-center max-w-2xl mx-auto"
-          >
+          <motion.div key="step-1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-medium mb-6 text-foreground">
               Boas-vindas ao Aion Logbook
             </h2>
@@ -62,43 +70,26 @@ export function Onboarding() {
 
       case 2:
         return (
-          <motion.div
-            key="step-2"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="max-w-3xl mx-auto w-full"
-          >
+          <motion.div key="step-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-3xl mx-auto w-full">
             <h2 className="text-2xl md:text-3xl font-medium mb-3 text-center text-foreground">
               Quais direções da sua vida você deseja acompanhar?
             </h2>
             <p className="text-center text-muted-foreground mb-8 md:mb-12 text-sm md:text-base">
               Selecione as áreas que deseja observar e cultivar
             </p>
-
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {SUGGESTED_DIRECTIONS.map((direction) => {
-                const Icon = direction.icon;
-                const isSelected = selectedDirections.includes(direction.id);
-
+                const Icon = direction.component;
+                const isSelected = selectedIds.includes(direction.id);
                 return (
                   <motion.button
                     key={direction.id}
                     onClick={() => toggleDirection(direction.id)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`
-                      p-4 md:p-6 rounded-xl border-2 transition-all duration-300 text-left
-                      ${isSelected
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border bg-card hover:border-primary/30'}
-                    `}
+                    className={`p-4 md:p-6 rounded-xl border-2 transition-all duration-300 text-left ${isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/30'}`}
                   >
-                    <Icon
-                      className={`w-7 h-7 md:w-8 md:h-8 mb-2 md:mb-3 ${
-                        isSelected ? 'text-primary' : 'text-muted-foreground'
-                      }`}
-                    />
+                    <Icon className={`w-7 h-7 md:w-8 md:h-8 mb-2 md:mb-3 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
                     <p className={`text-sm md:text-base font-medium ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                       {direction.label}
                     </p>
@@ -111,16 +102,10 @@ export function Onboarding() {
 
       case 3:
         return (
-          <motion.div
-            key="step-3"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="text-center max-w-2xl mx-auto"
-          >
+          <motion.div key="step-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center max-w-2xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-medium mb-6 text-foreground">
-              {selectedDirections.length > 0
-                ? `Você selecionou ${selectedDirections.length} ${selectedDirections.length === 1 ? 'direção' : 'direções'}`
+              {selectedIds.length > 0
+                ? `Você selecionou ${selectedIds.length} ${selectedIds.length === 1 ? 'direção' : 'direções'}`
                 : 'Você pode começar sem direções'}
             </h2>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
@@ -133,13 +118,7 @@ export function Onboarding() {
 
       case 4:
         return (
-          <motion.div
-            key="step-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="text-center max-w-2xl mx-auto"
-          >
+          <motion.div key="step-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center max-w-2xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-medium mb-6 text-foreground">
               Tudo pronto para começar
             </h2>
@@ -164,18 +143,12 @@ export function Onboarding() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10 px-4 py-10 md:py-12">
       <div className="max-w-5xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-12 md:mb-16"
-        >
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-12 md:mb-16">
           <div className="flex items-center justify-center gap-2">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  i <= step ? 'w-12 bg-primary' : 'w-8 bg-border'
-                }`}
+                className={`h-1.5 rounded-full transition-all duration-500 ${i <= step ? 'w-12 bg-primary' : 'w-8 bg-border'}`}
               />
             ))}
           </div>
@@ -193,12 +166,12 @@ export function Onboarding() {
           className="flex justify-center gap-4"
         >
           {step > 1 && (
-            <Button variant="ghost" onClick={() => setStep((prev) => prev - 1)}>
+            <Button variant="ghost" onClick={() => setStep((prev) => prev - 1)} disabled={submitting}>
               Voltar
             </Button>
           )}
-          <Button onClick={handleNext}>
-            {step === 4 ? 'Começar jornada' : 'Continuar'}
+          <Button onClick={handleNext} disabled={submitting}>
+            {submitting ? 'Salvando...' : step === 4 ? 'Começar jornada' : 'Continuar'}
           </Button>
         </motion.div>
       </div>

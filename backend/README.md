@@ -34,6 +34,7 @@ br.com.byop.aionlogbook
 │   ├── infrastructure
 │   └── mapper
 ├── identity
+├── plan
 ├── security
 └── shared
 ```
@@ -118,6 +119,11 @@ Todos os endpoints abaixo ficam sob a API privada versionada:
 | `GET` | `/api/v1/directions/{id}` | Busca uma direcao do usuario autenticado |
 | `PUT` | `/api/v1/directions/{id}` | Atualiza uma direcao do usuario autenticado |
 | `DELETE` | `/api/v1/directions/{id}` | Arquiva logicamente uma direcao do usuario autenticado |
+| `GET` | `/api/v1/plans` | Lista planos do usuario autenticado com filtros opcionais |
+| `POST` | `/api/v1/plans` | Cria um plano e registra evento de criacao |
+| `GET` | `/api/v1/plans/{id}` | Busca um plano do usuario autenticado |
+| `PUT` | `/api/v1/plans/{id}` | Atualiza um plano e registra evento de atualizacao |
+| `GET` | `/api/v1/plans/{id}/events` | Lista eventos do plano do usuario autenticado |
 
 ## Seguranca
 
@@ -143,4 +149,28 @@ Regras principais:
 - Buscas e alteracoes usam sempre `id + userProfileId`.
 - `DELETE` nao remove fisicamente o registro.
 - O arquivamento define `status = ARCHIVED`, `archivedAt = now` e atualiza `updatedAt`.
-- O dominio `Plan` ainda nao foi implementado.
+
+## Dominio Plan
+
+`Plan` representa um plano operacional do usuario autenticado, opcionalmente vinculado a uma direcao ativa.
+
+Status atuais:
+
+- `DRAFT`
+- `SCHEDULED`
+- `PENDING`
+- `DUE`
+- `IN_PROGRESS`
+- `COMPLETED`
+- `PARTIAL`
+- `POSTPONED`
+- `IGNORED`
+- `CANCELED`
+- `MISSED`
+
+Regras principais:
+
+- A criacao sempre deriva o ownership do usuario autenticado.
+- `directionId`, quando informado, precisa pertencer ao usuario e estar ativo.
+- A listagem permite filtros opcionais por `status`, `directionId` e `plannedDate`.
+- Criacoes e atualizacoes registram eventos em `plan_events`.

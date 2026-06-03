@@ -3,6 +3,11 @@ package br.com.byop.aionlogbook.security;
 import br.com.byop.aionlogbook.direction.infrastructure.DirectionRepository;
 import br.com.byop.aionlogbook.identity.application.UserProfileService;
 import br.com.byop.aionlogbook.identity.domain.UserProfile;
+import br.com.byop.aionlogbook.plan.application.CreatePlanUseCase;
+import br.com.byop.aionlogbook.plan.application.GetPlanEventsUseCase;
+import br.com.byop.aionlogbook.plan.application.GetPlanUseCase;
+import br.com.byop.aionlogbook.plan.application.ListPlansUseCase;
+import br.com.byop.aionlogbook.plan.application.UpdatePlanUseCase;
 import br.com.byop.aionlogbook.shared.time.TimeProvider;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -47,6 +52,24 @@ class SecurityConfigTest {
 
     @MockitoBean
     private DirectionRepository directionRepository;
+
+    @MockitoBean
+    private CreatePlanUseCase createPlanUseCase;
+
+    @MockitoBean
+    private UpdatePlanUseCase updatePlanUseCase;
+
+    @MockitoBean
+    private GetPlanUseCase getPlanUseCase;
+
+    @MockitoBean
+    private ListPlansUseCase listPlansUseCase;
+
+    @MockitoBean
+    private GetPlanEventsUseCase getPlanEventsUseCase;
+
+    @MockitoBean
+    private CurrentUserService currentUserService;
 
     @Nested
     class ApiV1 {

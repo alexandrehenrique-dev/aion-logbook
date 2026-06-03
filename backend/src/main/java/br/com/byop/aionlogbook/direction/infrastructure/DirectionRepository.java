@@ -18,4 +18,6 @@ public interface DirectionRepository extends JpaRepository<Direction, UUID> {
     List<Direction> findAllByUserProfileIdOrderByNameAsc(UUID userProfileId);
 
     Optional<Direction> findByIdAndUserProfileId(UUID id, UUID userProfileId);
+
+    boolean existsByIdAndUserProfileIdAndStatus(UUID id, UUID userProfileId, DirectionStatus status);
 }

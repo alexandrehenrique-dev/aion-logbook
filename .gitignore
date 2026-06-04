@@ -30,6 +30,12 @@ coverage/
 .vite/
 .cache/
 .parcel-cache/
+.npm/
+.pnpm-store/
+.yarn/
+.yarn/cache/
+vite.config.*.timestamp-*
+vite.config.*.mjs.timestamp-*
 
 # Env files
 .env
@@ -89,6 +95,7 @@ keycloak-data/
 postgres-data/
 pgdata/
 docker-data/
+data/
 backend/docker-data/
 backend/postgres-data/
 backend/keycloak-data/
@@ -96,6 +103,10 @@ backend/keycloak-data/
 
 # Docker overrides
 docker-compose.override.yml
+
+# Infra scripts (contêm secrets reais; usar *.example como template)
+infra/deploy.sh
+infra/backup.sh
 
 # Test / reports
 coverage/
@@ -107,6 +118,8 @@ out/
 playwright-report/
 cypress/videos/
 cypress/screenshots/
+.scannerwork/
+sonar-report/
 
 # Temporary
 tmp/

@@ -5,6 +5,7 @@ import br.com.byop.aionlogbook.dashboard.application.DashboardService;
 import br.com.byop.aionlogbook.direction.infrastructure.DirectionRepository;
 import br.com.byop.aionlogbook.identity.application.UserProfileService;
 import br.com.byop.aionlogbook.identity.domain.UserProfile;
+import br.com.byop.aionlogbook.onboarding.application.OnboardingService;
 import br.com.byop.aionlogbook.plan.application.CreatePlanUseCase;
 import br.com.byop.aionlogbook.plan.application.GetPlanEventsUseCase;
 import br.com.byop.aionlogbook.plan.application.GetPlanUseCase;
@@ -14,6 +15,7 @@ import br.com.byop.aionlogbook.plan.application.UpdatePlanUseCase;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanEventRepository;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanRepository;
 import br.com.byop.aionlogbook.session.application.SessionLogService;
+import br.com.byop.aionlogbook.settings.application.SettingsService;
 import br.com.byop.aionlogbook.shared.time.TimeProvider;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -94,6 +96,12 @@ class SecurityConfigTest {
 
     @MockitoBean
     private CreateBugReportUseCase createBugReportUseCase;
+
+    @MockitoBean
+    private OnboardingService onboardingService;
+
+    @MockitoBean
+    private SettingsService settingsService;
 
     @Nested
     class ApiV1 {

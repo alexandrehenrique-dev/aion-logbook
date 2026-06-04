@@ -136,6 +136,8 @@ Camadas e pacotes principais:
 - `plan`: controllers, use cases, DTOs, mapper, repositories, entidades e politicas de transicao.
 - `session`: controller, service, DTOs, mapper, repository e entidade `SessionLog`.
 - `dashboard`: controller, service e DTOs/projections de agregacao.
+- `onboarding`: controller, service e DTOs para onboarding minimo e direcoes sugeridas.
+- `settings`: controller, service e DTOs para preferencias minimas do usuario.
 - `scheduler`: jobs de atualizacao automatica de status dos planos.
 - `shared`: erros, paginacao, logging, tempo e wrappers comuns.
 
@@ -224,6 +226,52 @@ Todos os endpoints privados exigem JWT Bearer valido quando `AION_SECURITY_ENABL
 | `GET` | `/api/v1/dashboard/today` | Retorna a visao diaria agregada do usuario autenticado |
 | `GET` | `/api/v1/dashboard/summary` | Retorna o resumo geral agregado do usuario autenticado |
 | `POST` | `/api/v1/bug-reports` | Registra um bug report do usuario autenticado |
+| `GET` | `/api/v1/onboarding/status` | Retorna status do onboarding e sugestoes padrao de direcoes |
+| `POST` | `/api/v1/onboarding/complete` | Marca o onboarding do usuario autenticado como concluido |
+| `POST` | `/api/v1/onboarding/directions` | Cria direcoes em lote a partir do onboarding |
+| `GET` | `/api/v1/settings` | Retorna settings minimos do usuario autenticado |
+| `PUT` | `/api/v1/settings` | Atualiza settings minimos do usuario autenticado |
+
+## ETAPA 12 — Onboarding e Settings mínimos
+
+Endpoints implementados:
+
+- `GET /api/v1/onboarding/status`
+- `POST /api/v1/onboarding/complete`
+- `POST /api/v1/onboarding/directions`
+- `GET /api/v1/settings`
+- `PUT /api/v1/settings`
+
+Settings disponiveis:
+
+- `timezone`
+- `theme`
+- `defaultPlanDuration`
+- `notificationsEnabled`
+- `notificationLeadMinutes`
+- `onboardingCompleted`
+
+Regras:
+
+- `userId` nunca e recebido por parametro.
+- O usuario atual vem do JWT.
+- `UserProfile` e a fonte de verdade dos settings.
+- `timezone` deve ser um identificador IANA valido.
+- `theme` aceita `system`, `light` e `dark`.
+- `defaultPlanDuration` aceita de 5 ate 480 minutos.
+- `notificationLeadMinutes` aceita de 0 ate 1440 minutos.
+- Campos nulos em `PUT /api/v1/settings` preservam os valores atuais.
+- Onboarding e concluido alterando `onboardingCompleted`.
+- A criacao em lote de direcoes do onboarding reaproveita `DirectionService#create(...)`.
+
+Sugestoes padrao de onboarding:
+
+- Estudos
+- Carreira
+- Escrita
+- Projetos
+- Saúde
+- Filosofia
 
 ## ETAPA 10 - Dashboard Minimo
 

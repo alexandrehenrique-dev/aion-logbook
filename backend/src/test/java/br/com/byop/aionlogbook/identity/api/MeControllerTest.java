@@ -1,4 +1,4 @@
-package br.com.byop.aionlogbook.identity.web;
+package br.com.byop.aionlogbook.identity.api;
 
 import br.com.byop.aionlogbook.identity.application.UserProfileService;
 import br.com.byop.aionlogbook.identity.domain.UserProfile;

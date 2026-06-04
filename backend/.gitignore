@@ -34,6 +34,7 @@ Thumbs.db
 # Environment
 .env
 .env.*
+.env.local
 !.env.example
 application-local.yml
 application-local.yaml
@@ -41,6 +42,8 @@ application-local.properties
 !application-local.example.yml
 !application-local.example.yaml
 !application-local.example.properties
+application-dev-local.yml
+application-dev-local.yaml
 application-local-secrets.yml
 application-*.local.yml
 application-*.local.yaml
@@ -60,6 +63,7 @@ build/
 out/
 
 # Docker / local volumes
+docker-compose.override.yml
 docker-data/
 postgres-data/
 keycloak-data/

@@ -34,7 +34,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(PlanController.class)
+@WebMvcTest(
+        controllers = PlanController.class,
+        properties = {
+                "spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:8181/realms/aion-logbook-test",
+                "app.cors.allowed-origins=http://localhost:5173"
+        }
+)
 class PlanControllerTest {
 
     @Autowired

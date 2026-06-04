@@ -1,6 +1,9 @@
 # Aion Logbook Backend
 
 Backend do Aion Logbook, responsavel pela API HTTP privada da aplicacao.
+Ele concentra autenticacao via JWT, ownership dos recursos por usuario,
+persistencia em PostgreSQL, migrations versionadas e automacoes de status dos
+planos.
 
 ## Stack Principal
 
@@ -12,6 +15,15 @@ Backend do Aion Logbook, responsavel pela API HTTP privada da aplicacao.
 - PostgreSQL
 - Flyway
 - Maven
+
+## Profiles Disponiveis
+
+- `default`: profile base para ambientes reais. Usa variaveis de ambiente para
+  datasource, issuer JWT, CORS e demais configuracoes operacionais.
+- `local`: profile de desenvolvimento local. Deve ser criado a partir de
+  `src/main/resources/application-local.example.yml`, que usa valores locais nao
+  sensiveis para banco, Keycloak, Swagger e scheduler.
+- `test`: usado pela suite automatizada via `src/test/resources/application-test.yml`.
 
 ## Estrutura
 
@@ -42,15 +54,11 @@ br.com.byop.aionlogbook
 
 A API versionada fica sob `/api/v1/**`.
 
-## Configuracao Local
+## Configuracao
 
-O perfil conhecido para desenvolvimento local e `local`.
-
-Crie o arquivo de configuracao local a partir do exemplo:
-
-```bash
-cp src/main/resources/application-local.example.yml src/main/resources/application-local.yml
-```
+O `application.yml` versionado e o profile default do backend. Ele nao contem
+credenciais reais nem URLs privadas; ambientes reais devem fornecer os valores
+por variaveis de ambiente.
 
 Variaveis principais:
 
@@ -59,10 +67,22 @@ Variaveis principais:
 | `DB_URL` | URL JDBC do PostgreSQL |
 | `DB_USERNAME` | Usuario do banco |
 | `DB_PASSWORD` | Senha do banco |
-| `KEYCLOAK_ISSUER_URI` | Issuer URI do provedor JWT |
-| `FLYWAY_ENABLED` | Habilita/desabilita migrations Flyway |
-| `SWAGGER_ENABLED` | Habilita/desabilita Swagger/OpenAPI |
+| `KEYCLOAK_ISSUER_URI` | Issuer URI do Keycloak/provedor JWT |
 | `CORS_ALLOWED_ORIGINS` | Origens permitidas para CORS |
+| `SERVER_PORT` | Porta HTTP da aplicacao; padrao `8080` |
+| `SERVER_CONTEXT_PATH` | Context path da aplicacao; padrao `/` |
+| `FLYWAY_ENABLED` | Habilita/desabilita migrations Flyway; padrao `true` |
+| `SWAGGER_ENABLED` | Habilita/desabilita Swagger/OpenAPI; padrao `false` |
+| `AION_SECURITY_ENABLED` | Habilita/desabilita seguranca da API; padrao `true` |
+| `AION_SCHEDULER_DUE_FIXED_DELAY` | Intervalo em ms do job DUE; padrao `60000` |
+| `AION_SCHEDULER_MISSED_FIXED_DELAY` | Intervalo em ms do job MISSED; padrao `300000` |
+| `ACTUATOR_HEALTH_SHOW_DETAILS` | Exibicao de detalhes no healthcheck; padrao `never` |
+
+Para desenvolvimento local, crie um arquivo nao versionado a partir do exemplo:
+
+```bash
+cp src/main/resources/application-local.example.yml src/main/resources/application-local.yml
+```
 
 ## Rodar Localmente
 
@@ -86,11 +106,8 @@ Execute a suite automatizada a partir de `backend/`:
 mvn test
 ```
 
-Se o Maven Wrapper estiver disponivel no checkout:
-
-```bash
-./mvnw test
-```
+Se o Maven Wrapper for adicionado ao checkout em uma etapa futura, o comando
+equivalente sera `./mvnw test`.
 
 ## Migrations
 
@@ -107,6 +124,9 @@ Para aplicar migrations localmente, suba o banco configurado e inicie a aplicaca
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
+
+Em ambientes reais, configure `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` e mantenha
+`FLYWAY_ENABLED=true` para aplicar as migrations versionadas na subida.
 
 ## Endpoints Principais
 
@@ -186,6 +206,23 @@ Regras principais:
 - `directionId`, quando informado, precisa pertencer ao usuario e estar ativo.
 - A listagem permite filtros opcionais por `status`, `directionId` e `plannedDate`.
 - Criacoes e atualizacoes registram eventos em `plan_events`.
+
+## Scheduler DUE/MISSED
+
+O backend possui jobs agendados responsaveis por atualizar automaticamente o
+estado dos planos:
+
+- DUE: planos `SCHEDULED` ou `PENDING` viram `DUE` quando `plannedStartAt <= now`.
+- MISSED: planos `DUE` viram `MISSED` quando `plannedEndAt < now`.
+- Planos `IN_PROGRESS` nunca viram `MISSED` automaticamente.
+- Eventos `DUE` e `MISSED` sao criados de forma idempotente.
+- Os jobs usam `Clock` injetavel e executam dentro de transacao.
+
+Os intervalos sao configurados por `AION_SCHEDULER_DUE_FIXED_DELAY` e
+`AION_SCHEDULER_MISSED_FIXED_DELAY`. A migracao
+`V009__scheduler_plan_events_unique.sql` adiciona uma restricao unica parcial
+para evitar eventos duplicados de scheduler por plano. O projeto ainda nao usa
+ShedLock; a idempotencia fica concentrada no banco e na camada de aplicacao.
 
 ## Dominio SessionLog
 
@@ -273,4 +310,10 @@ Regras e erros esperados:
 - `complete` cria `SessionLog` automatico; `partial` cria `SessionLog` automatico quando houver duracao.
 - `lastStatusChangedAt` e atualizado em toda transicao desta etapa.
 
-Scheduler e dashboard ainda nao fazem parte desta etapa.
+## Observacoes de Seguranca
+
+- Nao versionar `application-local.yml`, `.env`, tokens, senhas ou URLs privadas.
+- O profile default deve receber configuracoes por variaveis de ambiente.
+- Endpoints privados dependem de JWT Bearer valido quando `AION_SECURITY_ENABLED=true`.
+- `CORS_ALLOWED_ORIGINS` deve listar apenas origens confiaveis em ambientes reais.
+- Swagger deve permanecer desabilitado por padrao fora de ambientes controlados.

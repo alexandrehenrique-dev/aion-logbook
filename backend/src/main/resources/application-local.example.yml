@@ -1,3 +1,10 @@
+aion:
+  scheduler:
+    due:
+      fixed-delay: 60000
+    missed:
+      fixed-delay: 300000
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/aion_logbook

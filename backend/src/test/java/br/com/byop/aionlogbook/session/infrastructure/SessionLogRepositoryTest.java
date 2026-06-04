@@ -1,6 +1,7 @@
 package br.com.byop.aionlogbook.session.infrastructure;
 
 import br.com.byop.aionlogbook.session.domain.SessionLog;
+import br.com.byop.aionlogbook.support.PostgresRepositoryTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class SessionLogRepositoryTest {
+class SessionLogRepositoryTest extends PostgresRepositoryTest {
 
     @Autowired
     private SessionLogRepository repository;

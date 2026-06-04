@@ -1,4 +1,10 @@
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8181/realms/aion-logbook-test
+
   datasource:
     driver-class-name: org.postgresql.Driver
 
@@ -19,3 +25,7 @@ logging:
   level:
     org.hibernate.SQL: warn
     org.flywaydb: info
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173

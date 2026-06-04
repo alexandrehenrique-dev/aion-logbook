@@ -9,6 +9,8 @@ import br.com.byop.aionlogbook.plan.application.GetPlanUseCase;
 import br.com.byop.aionlogbook.plan.application.ListPlansUseCase;
 import br.com.byop.aionlogbook.plan.application.TransitionPlanUseCase;
 import br.com.byop.aionlogbook.plan.application.UpdatePlanUseCase;
+import br.com.byop.aionlogbook.plan.infrastructure.PlanEventRepository;
+import br.com.byop.aionlogbook.plan.infrastructure.PlanRepository;
 import br.com.byop.aionlogbook.session.application.SessionLogService;
 import br.com.byop.aionlogbook.shared.time.TimeProvider;
 import org.junit.jupiter.api.Nested;
@@ -54,6 +56,12 @@ class SecurityConfigTest {
 
     @MockitoBean
     private DirectionRepository directionRepository;
+
+    @MockitoBean
+    private PlanRepository planRepository;
+
+    @MockitoBean
+    private PlanEventRepository planEventRepository;
 
     @MockitoBean
     private CreatePlanUseCase createPlanUseCase;

@@ -5,6 +5,9 @@ target/
 *.war
 *.ear
 .mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+!mvnw
+!mvnw.cmd
 
 # Logs
 logs/
@@ -31,12 +34,16 @@ Thumbs.db
 !.env.example
 application-local.yml
 application-local.yaml
+application-local.properties
 !application-local.example.yml
 !application-local.example.yaml
+!application-local.example.properties
 application-*.local.yml
 application-*.local.yaml
+application-*.local.properties
 application-secret.yml
 application-secret.yaml
+application-secret.properties
 
 # Test / coverage
 coverage/

@@ -44,8 +44,10 @@ services:
         condition: service_healthy
   app:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
+      args:
+        VITE_BASE_PATH: /logbook/
     container_name: aion-logbook-app
     restart: unless-stopped
     environment:

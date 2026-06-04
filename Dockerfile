@@ -2,7 +2,6 @@ FROM node:22-alpine AS frontend-build
 
 WORKDIR /app
 
-COPY frontend/.env.backend ./frontend/.env.backend
 COPY frontend/package*.json ./frontend/
 COPY frontend/scripts ./frontend/scripts
 COPY frontend/public ./frontend/public

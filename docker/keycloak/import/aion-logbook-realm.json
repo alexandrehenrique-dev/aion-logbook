@@ -21,12 +21,16 @@
       "redirectUris": [
         "http://localhost:5173/*",
         "http://localhost:8080/*",
-        "https://aion.genesis-lab.dev/*"
+        "https://aion.genesis-lab.dev/*",
+        "http://192.168.0.77/logbook/*",
+        "http://192.168.0.77:8077/logbook/*"
       ],
-      "webOrigins": [
+     "webOrigins": [
         "http://localhost:5173",
         "http://localhost:8080",
-        "https://aion.genesis-lab.dev"
+        "https://aion.genesis-lab.dev",
+        "http://192.168.0.77",
+        "http://192.168.0.77:8077"
       ],
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,

@@ -177,6 +177,35 @@ Status atuais: `DRAFT`, `SCHEDULED`, `PENDING`, `DUE`, `IN_PROGRESS`, `COMPLETED
 
 O dashboard e uma camada de leitura agregada. Ele nao e entidade persistida, nao possui tabela propria e apenas consolida dados ja existentes de planos, direcoes e sessoes.
 
+### Analytics mínimo
+
+O backend possui endpoints de analytics para leitura agregada dos planos e sessoes do usuario autenticado.
+
+Endpoints:
+
+- `GET /api/v1/analytics/overview`
+- `GET /api/v1/analytics/plans-by-day`
+- `GET /api/v1/analytics/status-distribution`
+- `GET /api/v1/analytics/time-by-direction`
+- `GET /api/v1/analytics/planned-vs-executed`
+
+Regras:
+
+- O usuario e resolvido pelo JWT.
+- Nenhum endpoint aceita `userId` via request.
+- Os filtros `dateFrom` e `dateTo` sao opcionais.
+- `completionRate` considera planos `COMPLETED` e `PARTIAL`.
+- `executedMinutes` e calculado a partir de `session_logs`.
+- O sistema retorna respostas seguras para banco vazio ou ausencia de sessoes.
+- Nao ha materialized views; as agregacoes usam queries simples sobre planos e sessoes.
+
+Exemplos:
+
+```bash
+curl "http://localhost:8080/api/v1/analytics/overview?dateFrom=2026-06-01&dateTo=2026-06-30"
+curl "http://localhost:8080/api/v1/analytics/time-by-direction"
+```
+
 ### BugReport
 
 `POST /api/v1/bug-reports` registra reports enviados pelo usuario autenticado. O `userId` vem do JWT via `CurrentUserService`, nunca do payload.
@@ -266,6 +295,11 @@ Todos os endpoints privados exigem JWT Bearer valido quando `AION_SECURITY_ENABL
 | `PUT` | `/api/v1/sessions/{id}` | Atualiza uma sessao do usuario autenticado |
 | `GET` | `/api/v1/dashboard/today` | Retorna a visao diaria agregada do usuario autenticado |
 | `GET` | `/api/v1/dashboard/summary` | Retorna o resumo geral agregado do usuario autenticado |
+| `GET` | `/api/v1/analytics/overview` | Retorna totais agregados de planos, direcoes e tempo executado |
+| `GET` | `/api/v1/analytics/plans-by-day` | Agrupa planos criados e executados por dia |
+| `GET` | `/api/v1/analytics/status-distribution` | Retorna distribuicao percentual dos status dos planos |
+| `GET` | `/api/v1/analytics/time-by-direction` | Agrupa minutos executados por direcao |
+| `GET` | `/api/v1/analytics/planned-vs-executed` | Compara minutos planejados e executados por dia |
 | `POST` | `/api/v1/bug-reports` | Registra um bug report do usuario autenticado |
 | `GET` | `/api/v1/logs` | Lista entradas de logbook do usuario autenticado |
 | `POST` | `/api/v1/logs` | Cria uma entrada de logbook |
@@ -368,6 +402,35 @@ Persistencia:
 - Dashboard nao e entidade persistida.
 - Nao existe tabela, migration ou repository proprio de dashboard.
 - A camada apenas agrega dados existentes de `Plan`, `Direction` e `SessionLog`.
+
+## ETAPA 14 - Analytics mínimo
+
+Endpoints implementados:
+
+- `GET /api/v1/analytics/overview`
+- `GET /api/v1/analytics/plans-by-day`
+- `GET /api/v1/analytics/status-distribution`
+- `GET /api/v1/analytics/time-by-direction`
+- `GET /api/v1/analytics/planned-vs-executed`
+
+Regras:
+
+- O usuario e resolvido pelo JWT via `CurrentUserService`.
+- Nenhum endpoint aceita `userId` via request.
+- Os filtros `dateFrom` e `dateTo` sao opcionais.
+- `completionRate` considera planos `COMPLETED` e `PARTIAL`.
+- `executedMinutes` e calculado a partir de `session_logs`.
+- `timeByDirection` agrupa tempo executado por `directionId`.
+- Banco vazio ou ausencia de sessoes retornam respostas vazias ou zeradas, sem divisao por zero.
+- As queries filtram por `plans.user_id` e `session_logs.user_id`.
+- Nao ha materialized views nesta etapa.
+
+Exemplos:
+
+```bash
+curl "http://localhost:8080/api/v1/analytics/overview?dateFrom=2026-06-01&dateTo=2026-06-30"
+curl "http://localhost:8080/api/v1/analytics/time-by-direction"
+```
 
 ## Seguranca
 

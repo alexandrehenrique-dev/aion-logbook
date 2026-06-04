@@ -11,9 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -171,6 +173,34 @@ class GlobalExceptionHandlerTest {
             assertThat(response.getBody().code()).isEqualTo(ErrorCode.BUSINESS_RULE_VIOLATION.name());
             assertThat(response.getBody().message()).isEqualTo("Regra de negócio violada.");
             assertThat(response.getBody().requestId()).isEqualTo(REQUEST_ID);
+        }
+    }
+
+    @Nested
+    class RequestParameter {
+
+        @Test
+        void shouldReturnBadRequestWhenRequestParameterTypeIsInvalid() {
+            MDC.put("requestId", REQUEST_ID);
+
+            var exception = new MethodArgumentTypeMismatchException(
+                    "data-invalida",
+                    LocalDate.class,
+                    "dateFrom",
+                    mock(MethodParameter.class),
+                    new IllegalArgumentException("Data inválida.")
+            );
+
+            ResponseEntity<ApiErrorResponse> response = handler.handleMethodArgumentTypeMismatch(exception, request());
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().timestamp()).isEqualTo(FIXED_INSTANT);
+            assertThat(response.getBody().status()).isEqualTo(400);
+            assertThat(response.getBody().code()).isEqualTo(ErrorCode.INVALID_REQUEST_PARAMETER.name());
+            assertThat(response.getBody().message()).isEqualTo("Parâmetro inválido: dateFrom");
+            assertThat(response.getBody().requestId()).isEqualTo(REQUEST_ID);
+            assertThat(response.getBody().details()).isEmpty();
         }
     }
 

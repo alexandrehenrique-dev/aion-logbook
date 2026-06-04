@@ -1,4 +1,4 @@
-# Java / Maven
+# Maven / Java
 target/
 .mvn/timing.properties
 *.class
@@ -47,6 +47,7 @@ src/main/resources/application-local.properties
 !application-local.example.properties
 application-dev-local.yml
 application-dev-local.yaml
+application-dev-local.properties
 application-local-secrets.yml
 application-*.local.yml
 application-*.local.yaml

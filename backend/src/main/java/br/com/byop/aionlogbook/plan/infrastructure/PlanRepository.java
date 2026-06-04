@@ -46,4 +46,10 @@ public interface PlanRepository extends JpaRepository<Plan, UUID> {
             LocalDate plannedDate,
             Pageable pageable
     );
+
+    boolean existsByUserIdAndStatusAndIdNot(
+            UUID userId,
+            PlanStatus status,
+            UUID ignoredPlanId
+    );
 }

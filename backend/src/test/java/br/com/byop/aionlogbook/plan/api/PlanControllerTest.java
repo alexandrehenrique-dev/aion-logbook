@@ -56,6 +56,9 @@ class PlanControllerTest {
     private GetPlanEventsUseCase getPlanEventsUseCase;
 
     @MockitoBean
+    private TransitionPlanUseCase transitionPlanUseCase;
+
+    @MockitoBean
     private CurrentUserService currentUserService;
 
     @MockitoBean

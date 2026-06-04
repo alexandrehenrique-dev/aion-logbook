@@ -124,6 +124,13 @@ Todos os endpoints abaixo ficam sob a API privada versionada:
 | `GET` | `/api/v1/plans/{id}` | Busca um plano do usuario autenticado |
 | `PUT` | `/api/v1/plans/{id}` | Atualiza um plano e registra evento de atualizacao |
 | `GET` | `/api/v1/plans/{id}/events` | Lista eventos do plano do usuario autenticado |
+| `POST` | `/api/v1/plans/{id}/start` | Inicia um plano permitido |
+| `POST` | `/api/v1/plans/{id}/complete` | Conclui um plano em andamento |
+| `POST` | `/api/v1/plans/{id}/partial` | Finaliza parcialmente um plano |
+| `POST` | `/api/v1/plans/{id}/postpone` | Posterga um plano permitido |
+| `POST` | `/api/v1/plans/{id}/ignore` | Ignora um plano permitido |
+| `POST` | `/api/v1/plans/{id}/cancel` | Cancela um plano nao terminal |
+| `POST` | `/api/v1/plans/{id}/modify` | Modifica campos operacionais de um plano nao terminal |
 
 ## Seguranca
 
@@ -174,3 +181,43 @@ Regras principais:
 - `directionId`, quando informado, precisa pertencer ao usuario e estar ativo.
 - A listagem permite filtros opcionais por `status`, `directionId` e `plannedDate`.
 - Criacoes e atualizacoes registram eventos em `plan_events`.
+
+## ETAPA 7 - Transicoes de Plan
+
+A Etapa 7 implementa as transicoes operacionais de `Plan` no backend. Cada transicao busca o recurso por `id + userId`, persiste o novo estado no plano e registra um evento em `plan_events` via `PlanEventRepository`.
+
+Endpoints de transicao:
+
+| Metodo | Endpoint | Evento |
+|---|---|---|
+| `POST` | `/api/v1/plans/{id}/start` | `STARTED` |
+| `POST` | `/api/v1/plans/{id}/complete` | `COMPLETED` |
+| `POST` | `/api/v1/plans/{id}/partial` | `PARTIAL_COMPLETED` |
+| `POST` | `/api/v1/plans/{id}/postpone` | `POSTPONED` |
+| `POST` | `/api/v1/plans/{id}/ignore` | `IGNORED` |
+| `POST` | `/api/v1/plans/{id}/cancel` | `CANCELED` |
+| `POST` | `/api/v1/plans/{id}/modify` | `MODIFIED` |
+
+Transicoes permitidas:
+
+| Acao | Origem permitida | Destino |
+|---|---|---|
+| `start` | `SCHEDULED`, `PENDING`, `DUE`, `MISSED`, `POSTPONED` | `IN_PROGRESS` |
+| `complete` | `IN_PROGRESS` | `COMPLETED` |
+| `partial` | `IN_PROGRESS`, `DUE`, `PENDING`, `MISSED` | `PARTIAL` |
+| `postpone` | `SCHEDULED`, `PENDING`, `DUE`, `MISSED`, `POSTPONED` | `POSTPONED` |
+| `ignore` | `SCHEDULED`, `PENDING`, `DUE`, `MISSED` | `IGNORED` |
+| `cancel` | Qualquer estado nao terminal | `CANCELED` |
+| `modify` | Qualquer estado nao terminal | Mantem o estado atual |
+
+Estados terminais nao transicionam: `COMPLETED`, `PARTIAL`, `IGNORED` e `CANCELED`.
+
+Regras e erros esperados:
+
+- Apenas um plano pode ficar `IN_PROGRESS` por usuario; iniciar outro plano em andamento retorna `409 CONFLICT`.
+- Plano inexistente ou pertencente a outro usuario retorna `404 RESOURCE_NOT_FOUND`.
+- Transicao invalida retorna `400 INVALID_TRANSITION`.
+- `start` atualiza `startedAt`; `complete` e `partial` atualizam `finishedAt`; `actualMinutes` e atualizado quando aplicavel.
+- `lastStatusChangedAt` e atualizado em toda transicao desta etapa.
+
+Scheduler e dashboard ainda nao fazem parte desta etapa.

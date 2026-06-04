@@ -1,8 +1,9 @@
-# Build
+# Java / Maven
 target/
 *.class
-
-# Maven
+*.jar
+*.war
+*.ear
 .mvn/wrapper/maven-wrapper.jar
 
 # Logs

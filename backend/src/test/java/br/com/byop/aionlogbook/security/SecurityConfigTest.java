@@ -7,6 +7,7 @@ import br.com.byop.aionlogbook.plan.application.CreatePlanUseCase;
 import br.com.byop.aionlogbook.plan.application.GetPlanEventsUseCase;
 import br.com.byop.aionlogbook.plan.application.GetPlanUseCase;
 import br.com.byop.aionlogbook.plan.application.ListPlansUseCase;
+import br.com.byop.aionlogbook.plan.application.TransitionPlanUseCase;
 import br.com.byop.aionlogbook.plan.application.UpdatePlanUseCase;
 import br.com.byop.aionlogbook.shared.time.TimeProvider;
 import org.junit.jupiter.api.Nested;
@@ -67,6 +68,9 @@ class SecurityConfigTest {
 
     @MockitoBean
     private GetPlanEventsUseCase getPlanEventsUseCase;
+
+    @MockitoBean
+    private TransitionPlanUseCase transitionPlanUseCase;
 
     @MockitoBean
     private CurrentUserService currentUserService;

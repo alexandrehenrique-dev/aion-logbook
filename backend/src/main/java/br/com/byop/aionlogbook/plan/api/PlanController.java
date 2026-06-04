@@ -2,10 +2,7 @@ package br.com.byop.aionlogbook.plan.api;
 
 import br.com.byop.aionlogbook.plan.application.*;
 import br.com.byop.aionlogbook.plan.domain.PlanStatus;
-import br.com.byop.aionlogbook.plan.dto.CreatePlanRequest;
-import br.com.byop.aionlogbook.plan.dto.PlanEventResponse;
-import br.com.byop.aionlogbook.plan.dto.PlanResponse;
-import br.com.byop.aionlogbook.plan.dto.UpdatePlanRequest;
+import br.com.byop.aionlogbook.plan.dto.*;
 import br.com.byop.aionlogbook.security.CurrentUserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -27,6 +24,7 @@ public class PlanController {
     private final ListPlansUseCase listPlansUseCase;
     private final GetPlanEventsUseCase getPlanEventsUseCase;
     private final CurrentUserService currentUserService;
+    private final TransitionPlanUseCase transitionPlanUseCase;
 
     public PlanController(
             CreatePlanUseCase createPlanUseCase,
@@ -34,7 +32,8 @@ public class PlanController {
             GetPlanUseCase getPlanUseCase,
             ListPlansUseCase listPlansUseCase,
             GetPlanEventsUseCase getPlanEventsUseCase,
-            CurrentUserService currentUserService
+            CurrentUserService currentUserService,
+            TransitionPlanUseCase transitionPlanUseCase
     ) {
         this.createPlanUseCase = createPlanUseCase;
         this.updatePlanUseCase = updatePlanUseCase;
@@ -42,6 +41,7 @@ public class PlanController {
         this.listPlansUseCase = listPlansUseCase;
         this.getPlanEventsUseCase = getPlanEventsUseCase;
         this.currentUserService = currentUserService;
+        this.transitionPlanUseCase = transitionPlanUseCase;
     }
 
     @GetMapping
@@ -93,5 +93,68 @@ public class PlanController {
         var userId = currentUserService.currentUserId();
 
         return getPlanEventsUseCase.execute(userId, id);
+    }
+
+    @PostMapping("/{id}/start")
+    public PlanResponse start(
+            @PathVariable UUID id,
+            @Valid @RequestBody StartPlanRequest request
+    ) {
+        var userId = currentUserService.currentUserId();
+        return transitionPlanUseCase.start(userId, id, request);
+    }
+
+    @PostMapping("/{id}/complete")
+    public PlanResponse complete(
+            @PathVariable UUID id,
+            @Valid @RequestBody CompletePlanRequest request
+    ) {
+        var userId = currentUserService.currentUserId();
+        return transitionPlanUseCase.complete(userId, id, request);
+    }
+
+    @PostMapping("/{id}/partial")
+    public PlanResponse partial(
+            @PathVariable UUID id,
+            @Valid @RequestBody PartialPlanRequest request
+    ) {
+        var userId = currentUserService.currentUserId();
+        return transitionPlanUseCase.partial(userId, id, request);
+    }
+
+    @PostMapping("/{id}/postpone")
+    public PlanResponse postpone(
+            @PathVariable UUID id,
+            @Valid @RequestBody PostponePlanRequest request
+    ) {
+        var userId = currentUserService.currentUserId();
+        return transitionPlanUseCase.postpone(userId, id, request);
+    }
+
+    @PostMapping("/{id}/ignore")
+    public PlanResponse ignore(
+            @PathVariable UUID id,
+            @Valid @RequestBody IgnorePlanRequest request
+    ) {
+        var userId = currentUserService.currentUserId();
+        return transitionPlanUseCase.ignore(userId, id, request);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public PlanResponse cancel(
+            @PathVariable UUID id,
+            @Valid @RequestBody CancelPlanRequest request
+    ) {
+        var userId = currentUserService.currentUserId();
+        return transitionPlanUseCase.cancel(userId, id, request);
+    }
+
+    @PostMapping("/{id}/modify")
+    public PlanResponse modify(
+            @PathVariable UUID id,
+            @Valid @RequestBody ModifyPlanRequest request
+    ) {
+        var userId = currentUserService.currentUserId();
+        return transitionPlanUseCase.modify(userId, id, request);
     }
 }

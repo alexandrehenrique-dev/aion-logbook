@@ -60,6 +60,9 @@ Variaveis principais:
 | `FLYWAY_ENABLED` | Habilita migrations Flyway; padrao `true` |
 | `SWAGGER_ENABLED` | Habilita Swagger/OpenAPI; padrao `false` |
 | `AION_SECURITY_ENABLED` | Habilita seguranca da API; padrao `true` |
+| `TELEGRAM_ENABLED` | Habilita notificacoes de BugReport no Telegram; padrao `false` |
+| `TELEGRAM_BOT_TOKEN` | Token do bot Telegram usado para BugReport; nao versionar |
+| `TELEGRAM_CHAT_ID` | Chat, grupo ou canal que recebe os BugReports |
 | `AION_SCHEDULER_DUE_FIXED_DELAY` | Intervalo do job DUE em ms |
 | `AION_SCHEDULER_MISSED_FIXED_DELAY` | Intervalo do job MISSED em ms |
 
@@ -167,6 +170,29 @@ Status atuais: `DRAFT`, `SCHEDULED`, `PENDING`, `DUE`, `IN_PROGRESS`, `COMPLETED
 
 O dashboard e uma camada de leitura agregada. Ele nao e entidade persistida, nao possui tabela propria e apenas consolida dados ja existentes de planos, direcoes e sessoes.
 
+### BugReport
+
+`POST /api/v1/bug-reports` registra reports enviados pelo usuario autenticado. O `userId` vem do JWT via `CurrentUserService`, nunca do payload.
+
+Exemplo rapido:
+
+```json
+{
+  "title": "Erro ao salvar direcao",
+  "description": "Ao clicar no botao salvar direcao, nada acontece na interface.",
+  "severity": "HIGH",
+  "page": "/directions/new",
+  "metadata": {
+    "browser": "Chrome",
+    "os": "macOS"
+  }
+}
+```
+
+O Telegram e opcional e configurado por `TELEGRAM_ENABLED`, `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID`. Se o envio ao Telegram falhar, o report continua persistido, a API retorna `201 Created` e `telegramSent=false`.
+
+Documentacao completa: [docs/telegram-bug-report.md](docs/telegram-bug-report.md).
+
 ## Endpoints Principais
 
 Todos os endpoints privados exigem JWT Bearer valido quando `AION_SECURITY_ENABLED=true`.
@@ -197,6 +223,7 @@ Todos os endpoints privados exigem JWT Bearer valido quando `AION_SECURITY_ENABL
 | `PUT` | `/api/v1/sessions/{id}` | Atualiza uma sessao do usuario autenticado |
 | `GET` | `/api/v1/dashboard/today` | Retorna a visao diaria agregada do usuario autenticado |
 | `GET` | `/api/v1/dashboard/summary` | Retorna o resumo geral agregado do usuario autenticado |
+| `POST` | `/api/v1/bug-reports` | Registra um bug report do usuario autenticado |
 
 ## ETAPA 10 - Dashboard Minimo
 

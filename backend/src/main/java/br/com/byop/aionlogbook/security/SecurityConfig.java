@@ -60,7 +60,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll();
                     }
-
+                    auth.requestMatchers(HttpMethod.POST, "/api/v1/bug-reports").authenticated();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     auth.requestMatchers("/api/v1/**").authenticated();
                     auth.anyRequest().permitAll();

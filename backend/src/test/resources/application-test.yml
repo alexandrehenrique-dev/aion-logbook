@@ -29,3 +29,8 @@ logging:
 app:
   cors:
     allowed-origins: http://localhost:5173
+  telegram:
+    bug-report:
+      enabled: ${TELEGRAM_ENABLED:false}
+      bot-token: ${TELEGRAM_BOT_TOKEN:}
+      chat-id: ${TELEGRAM_CHAT_ID:}

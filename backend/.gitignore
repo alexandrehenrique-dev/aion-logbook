@@ -41,6 +41,7 @@ application-local.properties
 !application-local.example.yml
 !application-local.example.yaml
 !application-local.example.properties
+application-local-secrets.yml
 application-*.local.yml
 application-*.local.yaml
 application-*.local.properties

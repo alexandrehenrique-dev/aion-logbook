@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     if (isKeycloakAuthMode) {
       sessionStorage.removeItem(STORAGE_KEY);
-      await keycloakLogout(window.location.origin + '/login');
+      await keycloakLogout();
       return;
     }
 

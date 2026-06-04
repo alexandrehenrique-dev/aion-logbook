@@ -25,7 +25,7 @@
         "http://192.168.0.77/logbook/*",
         "http://192.168.0.77:8077/logbook/*"
       ],
-     "webOrigins": [
+      "webOrigins": [
         "http://localhost:5173",
         "http://localhost:8080",
         "https://aion.genesis-lab.dev",
@@ -39,7 +39,7 @@
       "frontchannelLogout": true,
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:8080/*##https://aion.genesis-lab.dev/*",
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:8080/*##https://aion.genesis-lab.dev/*##http://192.168.0.77/logbook/*##http://192.168.0.77:8077/logbook/*",
         "oauth2.device.authorization.grant.enabled": "false",
         "oidc.ciba.grant.enabled": "false"
       },
@@ -56,7 +56,10 @@
         "phone",
         "offline_access",
         "microprofile-jwt"
-      ]
+      ],
+      "rootUrl": "http://192.168.0.77/logbook/",
+      "baseUrl": "http://192.168.0.77/logbook/",
+      "adminUrl": ""
     }
   ],
   "roles": {

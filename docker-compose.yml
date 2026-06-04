@@ -18,6 +18,8 @@ services:
       retries: 5
 
   keycloak:
+    # Em desenvolvimento: usa image direta + volume para hot-reload do tema
+    # Em produção: trocar para build: { context: ./docker/keycloak } e remover o volume do tema
     image: quay.io/keycloak/keycloak:26.0.7
     container_name: aion-logbook-keycloak
     restart: unless-stopped
@@ -34,6 +36,9 @@ services:
       - "${KEYCLOAK_PORT:-8181}:8080"
     volumes:
       - ./docker/keycloak/import:/opt/keycloak/data/import:ro
+      # Tema customizado montado em desenvolvimento (hot-reload)
+      - ./docker/keycloak/themes:/opt/keycloak/themes:ro
+      - ./docker/keycloak/scripts:/opt/keycloak/scripts:ro
     depends_on:
       postgres:
         condition: service_healthy

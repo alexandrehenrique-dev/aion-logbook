@@ -51,10 +51,7 @@ public class DirectionService {
 
     @Transactional(readOnly = true)
     public Direction findById(UUID id) {
-        UserProfile userProfile = userProfileService.getOrCreateCurrentUserProfile();
-
-        return repository.findByIdAndUserProfileId(id, userProfile.getId())
-                .orElseThrow(DirectionNotFoundException::new);
+        return findByIdInternal(id);
     }
 
     @Transactional
@@ -76,7 +73,7 @@ public class DirectionService {
 
     @Transactional
     public Direction update(UUID id, UpdateDirectionRequest request) {
-        Direction direction = findById(id);
+        Direction direction = findByIdInternal(id);
 
         direction.update(
                 request.name(),
@@ -92,7 +89,14 @@ public class DirectionService {
 
     @Transactional
     public void archive(UUID id) {
-        Direction direction = findById(id);
+        Direction direction = findByIdInternal(id);
         direction.archive(timeProvider.now());
+    }
+
+    private Direction findByIdInternal(UUID id) {
+        UserProfile userProfile = userProfileService.getOrCreateCurrentUserProfile();
+
+        return repository.findByIdAndUserProfileId(id, userProfile.getId())
+                .orElseThrow(DirectionNotFoundException::new);
     }
 }

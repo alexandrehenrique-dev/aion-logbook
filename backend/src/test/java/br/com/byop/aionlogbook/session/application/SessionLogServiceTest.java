@@ -10,11 +10,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -266,13 +266,7 @@ class SessionLogServiceTest {
 
             var result = service.createAutomaticFromPlan(
                     userId,
-                    planId,
-                    directionId,
-                    startedAt,
-                    finishedAt,
-                    null,
-                    "Plano concluído",
-                    "Sessão automática"
+                    new AutomaticSessionLogRequest(planId, directionId, startedAt, finishedAt, null, "Plano concluído", "Sessão automática")
             );
 
             assertThat(result.getUserId()).isEqualTo(userId);

@@ -80,8 +80,9 @@ class RequestIdFilterTest {
 
         String responseRequestId = response.getHeader(RequestIdFilter.REQUEST_ID_HEADER);
 
-        assertThat(responseRequestId).isNotBlank();
-        assertThat(responseRequestId).isNotEqualTo("   ");
+        assertThat(responseRequestId)
+                .isNotBlank()
+                .isNotEqualTo("   ");
         assertThat(requestIdFromMdc.get()).isEqualTo(responseRequestId);
         assertThat(MDC.get("requestId")).isNull();
     }

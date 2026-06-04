@@ -20,6 +20,7 @@ import { planService } from '../../services/planService';
 import { directionService } from '../../services/directionService';
 import type { Plan, PlanEvent, Direction } from '../../types';
 import { PLAN_STATUS_LABEL, PRIORITY_LABEL } from '../../types';
+import { toast } from '../../utils/toast';
 
 type ActionModal =
   | 'complete'
@@ -44,12 +45,21 @@ export function PlanDetail() {
   const [activeModal, setActiveModal] = useState<ActionModal>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // modal form state
+  // modal form state — action modals
   const [notes, setNotes] = useState('');
   const [actualMinutes, setActualMinutes] = useState('');
   const [reason, setReason] = useState('');
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
+
+  // modal form state — modify modal
+  const [modTitle, setModTitle] = useState('');
+  const [modDescription, setModDescription] = useState('');
+  const [modPriority, setModPriority] = useState('');
+  const [modDate, setModDate] = useState('');
+  const [modTime, setModTime] = useState('');
+  const [modMinutes, setModMinutes] = useState('');
+  const [modReason, setModReason] = useState('');
 
   const reload = async () => {
     if (!id) return;
@@ -81,6 +91,49 @@ export function PlanDetail() {
     setReason('');
     setNewDate('');
     setNewTime('');
+    setModTitle('');
+    setModDescription('');
+    setModPriority('');
+    setModDate('');
+    setModTime('');
+    setModMinutes('');
+    setModReason('');
+  };
+
+  const openModify = () => {
+    if (!plan) return;
+    setModTitle(plan.title);
+    setModDescription(plan.description ?? '');
+    setModPriority(plan.priority);
+    setModDate(plan.plannedDate ?? '');
+    setModTime(plan.plannedStartAt ? new Date(plan.plannedStartAt).toTimeString().slice(0, 5) : '');
+    setModMinutes(plan.estimatedMinutes ? String(plan.estimatedMinutes) : '');
+    setModReason('');
+    setActiveModal('modify');
+  };
+
+  const handleModify = async () => {
+    if (!id || !plan) return;
+    setSubmitting(true);
+    try {
+      await planService.modify(id, {
+        title: modTitle || plan.title,
+        description: modDescription || undefined,
+        priority: (modPriority || plan.priority) as Plan['priority'],
+        plannedDate: modDate || undefined,
+        plannedStartAt: modDate && modTime ? `${modDate}T${modTime}:00Z` : undefined,
+        estimatedMinutes: modMinutes ? Number(modMinutes) : undefined,
+        reason: modReason || undefined,
+      });
+      closeModal();
+      await reload();
+      toast.success('Plano modificado');
+    } catch (e: unknown) {
+      const msg = (e as { body?: { error?: string } })?.body?.error ?? 'Erro ao modificar plano.';
+      toast.error('Erro', msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleAction = async () => {
@@ -119,9 +172,10 @@ export function PlanDetail() {
       }
       closeModal();
       await reload();
+      toast.success('Ação registrada com sucesso');
     } catch (e: unknown) {
       const msg = (e as { body?: { error?: string } })?.body?.error ?? 'Erro ao executar ação.';
-      alert(msg);
+      toast.error('Erro', msg);
     } finally {
       setSubmitting(false);
     }
@@ -216,7 +270,7 @@ export function PlanDetail() {
               </div>
             </div>
             {!isTerminal && (
-              <Button className="flex items-center gap-2" size="sm" onClick={() => setActiveModal('modify')}>
+              <Button className="flex items-center gap-2" size="sm" onClick={openModify}>
                 <Edit2 className="w-4 h-4" />
                 Modificar
               </Button>
@@ -386,6 +440,120 @@ export function PlanDetail() {
           </motion.div>
         </div>
       </div>
+
+      {/* Modify Modal */}
+      <AnimatePresence>
+        {activeModal === 'modify' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-border">
+                <h2 className="text-base font-semibold text-foreground">Modificar plano</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Adaptar não é desistir.</p>
+              </div>
+              <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Título *</label>
+                  <input
+                    type="text"
+                    value={modTitle}
+                    onChange={(e) => setModTitle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Descrição</label>
+                  <textarea
+                    value={modDescription}
+                    onChange={(e) => setModDescription(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Prioridade</label>
+                    <select
+                      value={modPriority}
+                      onChange={(e) => setModPriority(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="LOW">Baixa</option>
+                      <option value="MEDIUM">Média</option>
+                      <option value="HIGH">Alta</option>
+                      <option value="CRITICAL">Crítica</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Duração estimada (min)</label>
+                    <input
+                      type="number"
+                      value={modMinutes}
+                      onChange={(e) => setModMinutes(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Data planejada</label>
+                    <input
+                      type="date"
+                      value={modDate}
+                      onChange={(e) => setModDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Horário</label>
+                    <input
+                      type="time"
+                      value={modTime}
+                      onChange={(e) => setModTime(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Motivo da modificação</label>
+                  <textarea
+                    value={modReason}
+                    onChange={(e) => setModReason(e.target.value)}
+                    rows={2}
+                    placeholder="Por que este plano está sendo modificado?"
+                    className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={closeModal}
+                    className="flex-1 py-2.5 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleModify}
+                    disabled={submitting || !modTitle.trim()}
+                    className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    {submitting ? 'Salvando...' : 'Salvar modificações'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Action Modals */}
       <AnimatePresence>

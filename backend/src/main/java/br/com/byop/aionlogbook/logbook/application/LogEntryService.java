@@ -1,23 +1,19 @@
 package br.com.byop.aionlogbook.logbook.application;
 
 import br.com.byop.aionlogbook.direction.infrastructure.DirectionRepository;
-import br.com.byop.aionlogbook.logbook.domain.LogEntryType;
+import br.com.byop.aionlogbook.logbook.domain.LogEntry;
 import br.com.byop.aionlogbook.logbook.dto.*;
 import br.com.byop.aionlogbook.logbook.infrastructure.LogEntryRepository;
 import br.com.byop.aionlogbook.logbook.mapper.LogEntryMapper;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanRepository;
 import br.com.byop.aionlogbook.shared.error.ResourceNotFoundException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -27,7 +23,6 @@ public class LogEntryService {
     private final DirectionRepository directionRepository;
     private final PlanRepository planRepository;
     private final LogEntryMapper logEntryMapper;
-    private final ObjectMapper objectMapper;
     private final Clock clock;
 
     public LogEntryService(
@@ -35,42 +30,21 @@ public class LogEntryService {
             DirectionRepository directionRepository,
             PlanRepository planRepository,
             LogEntryMapper logEntryMapper,
-            ObjectMapper objectMapper,
             Clock clock
     ) {
         this.logEntryRepository = logEntryRepository;
         this.directionRepository = directionRepository;
         this.planRepository = planRepository;
         this.logEntryMapper = logEntryMapper;
-        this.objectMapper = objectMapper;
         this.clock = clock;
     }
 
     @Transactional(readOnly = true)
-    public Page<LogEntryResponse> list(
-            UUID userId,
-            LogEntryType type,
-            UUID directionId,
-            UUID planId,
-            List<String> tags,
-            Instant dateFrom,
-            Instant dateTo,
-            String q,
-            Pageable pageable
-    ) {
-        validateOwnership(userId, directionId, planId);
+    public Page<LogEntryResponse> list(UUID userId, LogEntrySearchCriteria criteria, Pageable pageable) {
+        validateOwnership(userId, criteria.directionId(), criteria.planId());
 
-        return logEntryRepository.findByFilters(
-                userId,
-                type == null ? null : type.name(),
-                directionId,
-                planId,
-                dateFrom,
-                dateTo,
-                toTagsJson(tags),
-                normalize(q),
-                pageable
-        ).map(logEntryMapper::toResponse);
+        return logEntryRepository.findByFilters(userId, criteria, pageable)
+                .map(logEntryMapper::toResponse);
     }
 
     @Transactional
@@ -106,7 +80,7 @@ public class LogEntryService {
         logEntryRepository.delete(entry);
     }
 
-    private br.com.byop.aionlogbook.logbook.domain.LogEntry findOwned(UUID userId, UUID id) {
+    private LogEntry findOwned(UUID userId, UUID id) {
         return logEntryRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Log entry not found"));
     }
@@ -118,22 +92,6 @@ public class LogEntryService {
 
         if (planId != null && !planRepository.existsByIdAndUserId(planId, userId)) {
             throw new ResourceNotFoundException("Plan not found");
-        }
-    }
-
-    private String normalize(String value) {
-        return StringUtils.hasText(value) ? value.trim() : null;
-    }
-
-    private String toTagsJson(List<String> tags) {
-        if (tags == null || tags.isEmpty()) {
-            return null;
-        }
-
-        try {
-            return objectMapper.writeValueAsString(tags);
-        } catch (JsonProcessingException exception) {
-            throw new IllegalArgumentException("Invalid tags filter");
         }
     }
 }

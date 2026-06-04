@@ -31,13 +31,15 @@ class BugReportMapperTest {
 
             BugReport bugReport = BugReportMapper.toDomain(userId, request);
 
-            assertThat(bugReport.getUserId()).isEqualTo(userId);
-            assertThat(bugReport.getTitle()).isEqualTo(request.title());
-            assertThat(bugReport.getDescription()).isEqualTo(request.description());
-            assertThat(bugReport.getSeverity()).isEqualTo(BugReportSeverity.HIGH);
-            assertThat(bugReport.getPage()).isEqualTo("/directions");
-            assertThat(bugReport.getStatus()).isEqualTo(BugReportStatus.RECEIVED);
-            assertThat(bugReport.isTelegramSent()).isFalse();
+            assertThat(bugReport).satisfies(b -> {
+                assertThat(b.getUserId()).isEqualTo(userId);
+                assertThat(b.getTitle()).isEqualTo(request.title());
+                assertThat(b.getDescription()).isEqualTo(request.description());
+                assertThat(b.getSeverity()).isEqualTo(BugReportSeverity.HIGH);
+                assertThat(b.getPage()).isEqualTo("/directions");
+                assertThat(b.getStatus()).isEqualTo(BugReportStatus.RECEIVED);
+                assertThat(b.isTelegramSent()).isFalse();
+            });
         }
 
         @Test
@@ -60,13 +62,9 @@ class BugReportMapperTest {
 
             BugReport bugReport = BugReportMapper.toDomain(userId, request);
 
-            assertThat(bugReport.getMetadata()).containsEntry("browser", "Chrome");
-            assertThat(bugReport.getMetadata()).doesNotContainKeys(
-                    "accessToken",
-                    "authToken",
-                    "cookies",
-                    "localStorage"
-            );
+            assertThat(bugReport.getMetadata())
+                    .containsEntry("browser", "Chrome")
+                    .doesNotContainKeys("accessToken", "authToken", "cookies", "localStorage");
         }
 
         @Test
@@ -86,8 +84,9 @@ class BugReportMapperTest {
             @SuppressWarnings("unchecked")
             Map<String, Object> context = (Map<String, Object>) sanitized.get("context");
 
-            assertThat(context).containsEntry("page", "/directions");
-            assertThat(context).doesNotContainKey("authorization");
+            assertThat(context)
+                    .containsEntry("page", "/directions")
+                    .doesNotContainKey("authorization");
         }
     }
 
@@ -107,10 +106,12 @@ class BugReportMapperTest {
 
             var response = BugReportMapper.toResponse(bugReport);
 
-            assertThat(response.id()).isEqualTo(bugReport.getId());
-            assertThat(response.status()).isEqualTo(BugReportStatus.RECEIVED);
-            assertThat(response.telegramSent()).isFalse();
-            assertThat(response.message()).isEqualTo("Bug report registrado com sucesso.");
+            assertThat(response).satisfies(r -> {
+                assertThat(r.id()).isEqualTo(bugReport.getId());
+                assertThat(r.status()).isEqualTo(BugReportStatus.RECEIVED);
+                assertThat(r.telegramSent()).isFalse();
+                assertThat(r.message()).isEqualTo("Bug report registrado com sucesso.");
+            });
         }
     }
 }

@@ -2,6 +2,7 @@
   "realm": "aion-logbook",
   "enabled": true,
   "displayName": "Aion Logbook",
+  "loginTheme": "aion-logbook",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
@@ -12,16 +13,20 @@
     {
       "clientId": "aion-logbook-web",
       "name": "Aion Logbook Web",
-      "description": "Public SPA client for local Aion Logbook frontend development.",
+      "description": "Public SPA client for Aion Logbook frontend.",
       "enabled": true,
       "publicClient": true,
       "protocol": "openid-connect",
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "http://localhost:5173/*"
+        "http://localhost:5173/*",
+        "http://localhost:8080/*",
+        "https://aion.genesis-lab.dev/*"
       ],
       "webOrigins": [
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "https://aion.genesis-lab.dev"
       ],
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
@@ -30,7 +35,7 @@
       "frontchannelLogout": true,
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:5173/*",
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:8080/*##https://aion.genesis-lab.dev/*",
         "oauth2.device.authorization.grant.enabled": "false",
         "oidc.ciba.grant.enabled": "false"
       },
@@ -57,6 +62,51 @@
       }
     ]
   },
+  "identityProviders": [
+    {
+      "alias": "google",
+      "displayName": "Google",
+      "providerId": "google",
+      "enabled": true,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "",
+        "clientSecret": "",
+        "defaultScope": "openid profile email",
+        "hostedDomain": "",
+        "useJwksUrl": "true",
+        "syncMode": "IMPORT"
+      }
+    },
+    {
+      "alias": "microsoft",
+      "displayName": "Microsoft",
+      "providerId": "microsoft",
+      "enabled": true,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": false,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "",
+        "clientSecret": "",
+        "tenantId": "common",
+        "defaultScope": "openid profile email",
+        "useJwksUrl": "true",
+        "syncMode": "IMPORT"
+      }
+    }
+  ],
+  "identityProviderMappers": [],
   "groups": [],
   "users": []
 }

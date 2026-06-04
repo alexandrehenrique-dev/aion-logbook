@@ -6,6 +6,8 @@ import br.com.byop.aionlogbook.plan.domain.PlanEventType;
 import br.com.byop.aionlogbook.plan.domain.PlanStatus;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanEventRepository;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import java.util.UUID;
 @Service
 public class PlanSchedulerService {
 
+    private static final Logger log = LoggerFactory.getLogger(PlanSchedulerService.class);
     private static final int BATCH_SIZE = 500;
 
     private final PlanRepository planRepository;
@@ -112,8 +115,9 @@ public class PlanSchedulerService {
 
         try {
             planEventRepository.save(event);
-        } catch (DataIntegrityViolationException ignored) {
-            // Idempotencia contra corrida entre execucoes/instancias sem ShedLock.
+        } catch (DataIntegrityViolationException e) {
+            log.debug("scheduler.event.duplicate planId={} eventType={} — race condition idempotent skip",
+                    plan.getId(), eventType, e);
         }
     }
 }

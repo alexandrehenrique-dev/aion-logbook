@@ -14,6 +14,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Repository
 public class AnalyticsRepository {
@@ -85,17 +86,12 @@ public class AnalyticsRepository {
 
         setCommonParameters(query, userId, dateFrom, dateTo);
 
-        return query.getResultList()
-                .stream()
-                .map(row -> {
-                    var values = (Object[]) row;
-
-                    return new PlansByDayProjection(
-                            toLocalDate(values[0]),
-                            toLong(values[1]),
-                            toLong(values[2])
-                    );
-                })
+        return resultRows(query)
+                .map(row -> new PlansByDayProjection(
+                        toLocalDate(row[0]),
+                        toLong(row[1]),
+                        toLong(row[2])
+                ))
                 .toList();
     }
 
@@ -114,16 +110,11 @@ public class AnalyticsRepository {
 
         setCommonParameters(query, userId, dateFrom, dateTo);
 
-        return query.getResultList()
-                .stream()
-                .map(row -> {
-                    var values = (Object[]) row;
-
-                    return new StatusDistributionProjection(
-                            String.valueOf(values[0]),
-                            toLong(values[1])
-                    );
-                })
+        return resultRows(query)
+                .map(row -> new StatusDistributionProjection(
+                        String.valueOf(row[0]),
+                        toLong(row[1])
+                ))
                 .toList();
     }
 
@@ -148,19 +139,14 @@ public class AnalyticsRepository {
 
         setCommonParameters(query, userId, dateFrom, dateTo);
 
-        return query.getResultList()
-                .stream()
-                .map(row -> {
-                    var values = (Object[]) row;
-
-                    return new TimeByDirectionProjection(
-                            toUuid(values[0]),
-                            String.valueOf(values[1]),
-                            values[2] == null ? null : String.valueOf(values[2]),
-                            toLong(values[3]),
-                            toLong(values[4])
-                    );
-                })
+        return resultRows(query)
+                .map(row -> new TimeByDirectionProjection(
+                        toUuid(row[0]),
+                        String.valueOf(row[1]),
+                        row[2] == null ? null : String.valueOf(row[2]),
+                        toLong(row[3]),
+                        toLong(row[4])
+                ))
                 .toList();
     }
 
@@ -199,27 +185,27 @@ public class AnalyticsRepository {
 
         setCommonParameters(query, userId, dateFrom, dateTo);
 
-        return query.getResultList()
-                .stream()
-                .map(row -> {
-                    var values = (Object[]) row;
-
-                    return new PlannedVsExecutedProjection(
-                            toLocalDate(values[0]),
-                            toLong(values[1]),
-                            toLong(values[2])
-                    );
-                })
+        return resultRows(query)
+                .map(row -> new PlannedVsExecutedProjection(
+                        toLocalDate(row[0]),
+                        toLong(row[1]),
+                        toLong(row[2])
+                ))
                 .toList();
     }
 
-    private void setCommonParameters(Query query, UUID userId, LocalDate dateFrom, LocalDate dateTo) {
+    @SuppressWarnings("unchecked")
+    private static Stream<Object[]> resultRows(Query query) {
+        return ((List<Object[]>) query.getResultList()).stream();
+    }
+
+    private static void setCommonParameters(Query query, UUID userId, LocalDate dateFrom, LocalDate dateTo) {
         query.setParameter("userId", userId);
         query.setParameter("dateFrom", dateFrom);
         query.setParameter("dateTo", dateTo);
     }
 
-    private long toLong(Object value) {
+    private static long toLong(Object value) {
         if (value == null) {
             return 0L;
         }
@@ -231,7 +217,7 @@ public class AnalyticsRepository {
         return Long.parseLong(value.toString());
     }
 
-    private LocalDate toLocalDate(Object value) {
+    private static LocalDate toLocalDate(Object value) {
         if (value == null) {
             return null;
         }
@@ -247,7 +233,7 @@ public class AnalyticsRepository {
         return LocalDate.parse(value.toString());
     }
 
-    private UUID toUuid(Object value) {
+    private static UUID toUuid(Object value) {
         if (value == null) {
             return null;
         }

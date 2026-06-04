@@ -216,8 +216,7 @@ class DirectionServiceTest {
     }
 
     private UserProfile userProfile() {
-        UserProfile userProfile = mock(UserProfile.class);
-        return userProfile;
+        return mock(UserProfile.class);
     }
 
 }

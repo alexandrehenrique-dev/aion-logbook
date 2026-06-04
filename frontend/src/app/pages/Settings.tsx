@@ -1,4 +1,4 @@
-import { Bell, CheckCircle2, Globe, Palette, Settings as SettingsIcon, User } from 'lucide-react';
+import { Bell, CheckCircle2, Globe, Palette, Settings as SettingsIcon, Smartphone, User } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { Card } from '../components/Card';
@@ -7,6 +7,8 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { settingsService } from '../../services/settingsService';
 import { useAuth } from '../../features/auth/AuthContext';
 import type { UserSettings } from '../../services/settingsService';
+import { browserNotificationService } from '../../services/browserNotificationService';
+import { toast } from '../../utils/toast';
 
 export function Settings() {
   const { user } = useAuth();
@@ -22,11 +24,13 @@ export function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [browserPermission, setBrowserPermission] = useState<NotificationPermission | 'unsupported'>('default');
 
   useEffect(() => {
     settingsService.get()
       .then(setSettings)
       .finally(() => setLoading(false));
+    setBrowserPermission(browserNotificationService.getPermission());
   }, []);
 
   const handleSave = async () => {
@@ -35,10 +39,20 @@ export function Settings() {
       const updated = await settingsService.update(settings);
       setSettings(updated);
       setSaved(true);
+      toast.success('Configurações salvas');
       setTimeout(() => setSaved(false), 2500);
+    } catch {
+      toast.error('Erro ao salvar configurações');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleRequestBrowserPermission = async () => {
+    const perm = await browserNotificationService.requestPermission();
+    setBrowserPermission(perm);
+    if (perm === 'granted') toast.success('Notificações do navegador ativadas');
+    else if (perm === 'denied') toast.error('Permissão negada', 'Ative nas configurações do navegador');
   };
 
   const updateSetting = <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
@@ -186,6 +200,32 @@ export function Settings() {
                       max={120}
                       className="w-24 px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
+                  </div>
+                )}
+                {browserPermission !== 'unsupported' && (
+                  <div className="pt-3 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="w-4 h-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Notificações do navegador</p>
+                          <p className="text-xs text-muted-foreground">
+                            {browserPermission === 'granted' ? 'Ativadas' : browserPermission === 'denied' ? 'Bloqueadas pelo navegador' : 'Não solicitadas'}
+                          </p>
+                        </div>
+                      </div>
+                      {browserPermission !== 'granted' && browserPermission !== 'denied' && (
+                        <button
+                          onClick={handleRequestBrowserPermission}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          Ativar
+                        </button>
+                      )}
+                      {browserPermission === 'granted' && (
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ Ativas</span>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className="pt-2 border-t border-border">

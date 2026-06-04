@@ -30,7 +30,8 @@ class TelegramBugReportNotifierTest {
                     restClient
             );
 
-            assertThatCode(() -> notifier.notify(validBugReport()))
+            var bugReport = validBugReport();
+            assertThatCode(() -> notifier.notify(bugReport))
                     .doesNotThrowAnyException();
 
             verifyNoInteractions(restClient);
@@ -69,7 +70,8 @@ class TelegramBugReportNotifierTest {
                     restClient
             );
 
-            assertThatThrownBy(() -> notifier.notify(validBugReport()))
+            var bugReport = validBugReport();
+            assertThatThrownBy(() -> notifier.notify(bugReport))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Telegram bot token is not configured");
 
@@ -83,7 +85,8 @@ class TelegramBugReportNotifierTest {
                     restClient
             );
 
-            assertThatThrownBy(() -> notifier.notify(validBugReport()))
+            var bugReport = validBugReport();
+            assertThatThrownBy(() -> notifier.notify(bugReport))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Telegram chat id is not configured");
 

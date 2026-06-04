@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card } from '../components/Card';
+import { ChartTooltip } from '../components/ChartTooltip';
 import { directionService } from '../../services/directionService';
 import { planService } from '../../services/planService';
 import type { Direction, Plan } from '../../types';
@@ -197,8 +198,18 @@ export function DirectionDetail() {
                     <XAxis dataKey="week" stroke="var(--color-muted-foreground)" style={{ fontSize: '12px' }} />
                     <YAxis stroke="var(--color-muted-foreground)" style={{ fontSize: '12px' }} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '12px' }}
-                      formatter={(v: number) => [`${v}h`, 'Horas']}
+                      content={(props) => {
+                        const p = props.payload?.[0];
+                        return (
+                          <ChartTooltip
+                            {...props}
+                            title={String(props.label ?? '')}
+                            rows={() => [
+                              { label: 'Horas investidas', value: `${p?.value ?? 0}h`, color: direction?.color ?? 'var(--color-primary)' },
+                            ]}
+                          />
+                        );
+                      }}
                     />
                     <Area type="monotone" dataKey="hours" stroke={direction.color ?? 'var(--color-primary)'} strokeWidth={2} fillOpacity={1} fill="url(#colorDir)" />
                   </AreaChart>

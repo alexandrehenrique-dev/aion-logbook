@@ -85,9 +85,9 @@ class DashboardServiceTest {
                     .thenReturn(List.of(pendingPlan));
 
             when(sessionLogRepository.sumDurationMinutesByUserIdBetween(
-                    eq(userId),
-                    eq(LocalDate.of(2026, 6, 4).atStartOfDay(ZONE_ID).toOffsetDateTime()),
-                    eq(LocalDate.of(2026, 6, 5).atStartOfDay(ZONE_ID).toOffsetDateTime())
+                    userId,
+                    LocalDate.of(2026, 6, 4).atStartOfDay(ZONE_ID).toOffsetDateTime(),
+                    LocalDate.of(2026, 6, 5).atStartOfDay(ZONE_ID).toOffsetDateTime()
             )).thenReturn(90);
 
             when(directionRepository.countByUserProfileIdAndStatus(userId, DirectionStatus.ACTIVE))
@@ -175,9 +175,9 @@ class DashboardServiceTest {
                     .thenReturn(600);
 
             when(sessionLogRepository.sumDurationMinutesByUserIdBetween(
-                    eq(userId),
-                    eq(LocalDate.of(2026, 6, 1).atStartOfDay(ZONE_ID).toOffsetDateTime()),
-                    eq(LocalDate.of(2026, 6, 5).atStartOfDay(ZONE_ID).toOffsetDateTime())
+                    userId,
+                    LocalDate.of(2026, 6, 1).atStartOfDay(ZONE_ID).toOffsetDateTime(),
+                    LocalDate.of(2026, 6, 5).atStartOfDay(ZONE_ID).toOffsetDateTime()
             )).thenReturn(180);
 
             when(directionRepository.countByUserProfileIdAndStatus(userId, DirectionStatus.ACTIVE))

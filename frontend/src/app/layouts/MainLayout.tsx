@@ -17,13 +17,15 @@ import {
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import { useAuth } from '../../features/auth/AuthContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { BugReportModal } from '../../features/bug-report/BugReportModal';
 import { notificationService } from '../../services/notificationService';
 import type { AppNotification } from '../../services/notificationService';
+import { searchService } from '../../services/searchService';
+import type { SearchResult } from '../../services/searchService';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -149,6 +151,107 @@ function ProfileMenu({ onClose, onBugReport }: { onClose: () => void; onBugRepor
   );
 }
 
+const TYPE_LABEL: Record<string, string> = {
+  plan: 'Plano',
+  direction: 'Direção',
+  log: 'Logbook',
+};
+
+function GlobalSearch() {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const searchRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const runSearch = useCallback((q: string) => {
+    if (!q.trim()) { setResults([]); setOpen(false); return; }
+    setLoading(true);
+    searchService.search(q)
+      .then((r) => { setResults(r); setOpen(true); })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const q = e.target.value;
+    setQuery(q);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => runSearch(q), 300);
+  };
+
+  const handleSelect = (result: SearchResult) => {
+    navigate(result.path);
+    setQuery('');
+    setResults([]);
+    setOpen(false);
+  };
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const grouped = results.reduce<Record<string, SearchResult[]>>((acc, r) => {
+    (acc[r.type] ??= []).push(r);
+    return acc;
+  }, {});
+
+  return (
+    <div className="relative flex-1 max-w-md" ref={searchRef}>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          value={query}
+          onChange={handleChange}
+          onFocus={() => query.trim() && setOpen(true)}
+          placeholder="Buscar planos, direções, logs..."
+          className="w-full pl-9 pr-4 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        {loading && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        )}
+      </div>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full mt-2 left-0 right-0 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden max-h-80 overflow-y-auto"
+          >
+            {results.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Nenhum resultado para "{query}"</p>
+            ) : (
+              Object.entries(grouped).map(([type, items]) => (
+                <div key={type}>
+                  <p className="text-xs font-medium text-muted-foreground px-4 py-2 bg-muted/30">{TYPE_LABEL[type] ?? type}</p>
+                  {items.map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={() => handleSelect(r)}
+                      className="w-full text-left px-4 py-2.5 hover:bg-muted/50 transition-colors flex flex-col gap-0.5"
+                    >
+                      <span className="text-sm text-foreground truncate">{r.title}</span>
+                      {r.subtitle && <span className="text-xs text-muted-foreground">{r.subtitle}</span>}
+                    </button>
+                  ))}
+                </div>
+              ))
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function MainLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -238,9 +341,9 @@ export function MainLayout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-64 border-r border-border bg-card/30 backdrop-blur-sm flex-col shrink-0">
+      <aside className="hidden md:flex w-64 border-r border-border bg-card/30 backdrop-blur-sm flex-col shrink-0 h-screen sticky top-0 overflow-y-auto">
         <SidebarContent />
       </aside>
 
@@ -276,9 +379,9 @@ export function MainLayout({ children }: { children: ReactNode }) {
       </AnimatePresence>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top header */}
-        <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-30">
+        <header className="border-b border-border bg-card/30 backdrop-blur-sm shrink-0 z-30">
           <div className="px-4 md:px-6 py-3 flex items-center gap-3">
             {/* Mobile hamburger */}
             <button
@@ -290,16 +393,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
             </button>
 
             {/* Search */}
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  className="w-full pl-9 pr-4 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-            </div>
+            <GlobalSearch />
 
             {/* Right actions */}
             <div className="flex items-center gap-1 ml-auto">
@@ -345,7 +439,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-y-auto">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

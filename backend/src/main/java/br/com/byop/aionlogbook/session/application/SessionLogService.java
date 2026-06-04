@@ -59,8 +59,7 @@ public class SessionLogService {
 
     @Transactional(readOnly = true)
     public SessionLog findById(UUID userId, UUID id) {
-        return sessionLogRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sessão não encontrada."));
+        return findByIdInternal(userId, id);
     }
 
     @Transactional
@@ -90,7 +89,7 @@ public class SessionLogService {
 
     @Transactional
     public SessionLog update(UUID userId, UUID id, UpdateSessionLogRequest request) {
-        var sessionLog = findById(userId, id);
+        var sessionLog = findByIdInternal(userId, id);
 
         validateDirectionOwnership(userId, request.directionId());
         validatePlanOwnership(userId, request.planId());
@@ -119,37 +118,33 @@ public class SessionLogService {
     }
 
     @Transactional
-    public SessionLog createAutomaticFromPlan(
-            UUID userId,
-            UUID planId,
-            UUID directionId,
-            OffsetDateTime startedAt,
-            OffsetDateTime finishedAt,
-            Integer actualMinutes,
-            String result,
-            String notes
-    ) {
-        validatePlanOwnership(userId, planId);
-        validateDirectionOwnership(userId, directionId);
+    public SessionLog createAutomaticFromPlan(UUID userId, AutomaticSessionLogRequest request) {
+        validatePlanOwnership(userId, request.planId());
+        validateDirectionOwnership(userId, request.directionId());
 
         var durationMinutes = resolveDurationMinutes(
-                startedAt,
-                finishedAt,
-                actualMinutes
+                request.startedAt(),
+                request.finishedAt(),
+                request.actualMinutes()
         );
 
         var sessionLog = SessionLog.builder()
                 .userId(userId)
-                .planId(planId)
-                .directionId(directionId)
-                .startedAt(startedAt)
-                .finishedAt(finishedAt)
+                .planId(request.planId())
+                .directionId(request.directionId())
+                .startedAt(request.startedAt())
+                .finishedAt(request.finishedAt())
                 .durationMinutes(durationMinutes)
-                .result(result)
-                .notes(notes)
+                .result(request.result())
+                .notes(request.notes())
                 .build();
 
         return sessionLogRepository.save(sessionLog);
+    }
+
+    private SessionLog findByIdInternal(UUID userId, UUID id) {
+        return sessionLogRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sessão não encontrada."));
     }
 
     private Integer resolveDurationMinutes(

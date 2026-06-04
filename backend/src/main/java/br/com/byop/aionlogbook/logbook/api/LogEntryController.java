@@ -1,5 +1,6 @@
 package br.com.byop.aionlogbook.logbook.api;
 
+import br.com.byop.aionlogbook.logbook.application.LogEntrySearchCriteria;
 import br.com.byop.aionlogbook.logbook.application.LogEntryService;
 import br.com.byop.aionlogbook.logbook.domain.LogEntryType;
 import br.com.byop.aionlogbook.logbook.dto.*;
@@ -46,18 +47,9 @@ public class LogEntryController {
             Pageable pageable
     ) {
         var userId = currentUserService.currentUserId();
+        var criteria = new LogEntrySearchCriteria(type, directionId, planId, tags, dateFrom, dateTo, q);
 
-        return logEntryService.list(
-                userId,
-                type,
-                directionId,
-                planId,
-                tags,
-                dateFrom,
-                dateTo,
-                q,
-                pageable
-        );
+        return logEntryService.list(userId, criteria, pageable);
     }
 
     @PostMapping

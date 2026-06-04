@@ -1,0 +1,17 @@
+{
+  "name": "Aion Logbook",
+  "short_name": "Aion",
+  "description": "Mapa de Direção Pessoal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1a1c",
+  "theme_color": "#2c5f6f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

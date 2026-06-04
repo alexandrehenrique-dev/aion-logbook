@@ -33,12 +33,10 @@ src/
     pages/              — Dashboard, Plans, Directions, Analytics, etc.
     components/         — Button, Card, ThemeToggle, ui/* (shadcn)
     providers/          — ThemeProvider
-  components/
-    feedback/           — GlobalLoading, Skeleton, EmptyState, ErrorState
   config/
     env.ts              — leitura centralizada de import.meta.env
   features/
-    auth/               — AuthContext, useAuth (mock login/logout)
+    auth/               — AuthContext, useAuth, Keycloak client
     bug-report/         — BugReportModal
   lib/
     http/
@@ -55,6 +53,8 @@ src/
     sessionService.ts
     logbookService.ts
     analyticsService.ts
+    browserNotificationService.ts
+    searchService.ts
   types/
     index.ts            — contratos de domínio alinhados com backend
   utils/
@@ -76,8 +76,8 @@ Componentes consomem serviços. Nunca chamam `fetch` diretamente. Os contratos d
 
 | Variável | Valor | Comportamento |
 |---|---|---|
-| `VITE_AUTH_MODE` | `mock` | Login aceita qualquer credencial, retorna usuário dev |
-| `VITE_AUTH_MODE` | `keycloak` | Preparado para integração Keycloak/OIDC (TODO) |
+| `VITE_AUTH_MODE` | `mock` | Login local de desenvolvimento |
+| `VITE_AUTH_MODE` | `keycloak` | Authorization Code Flow + PKCE via Keycloak |
 
 ## Variáveis de ambiente
 
@@ -100,6 +100,15 @@ VITE_KEYCLOAK_CLIENT_ID=aion-logbook-web
 
 ## Rodando localmente
 
+Este checkout possui `package-lock.json`; use `npm` por padrão:
+
+```bash
+npm install
+npm run dev
+```
+
+Se `pnpm` estiver instalado e você preferir usá-lo:
+
 ```bash
 pnpm install
 pnpm dev
@@ -110,7 +119,13 @@ O app estará disponível em `http://localhost:5173`.
 ## Build
 
 ```bash
-pnpm build
+npm run build
+```
+
+Build para ser servido pelo backend Spring Boot:
+
+```bash
+npm run build:backend
 ```
 
 ## Domínios e contratos
@@ -132,37 +147,37 @@ PARTIAL | POSTPONED | IGNORED | CANCELED | MISSED
 ## Endpoints mockados (espelham backend futuro)
 
 ```
-GET/POST       /api/directions
-GET/PUT/DELETE /api/directions/:id
+GET/POST       /api/v1/directions
+GET/PUT/DELETE /api/v1/directions/:id
 
-GET/POST       /api/plans
-GET/PUT/DELETE /api/plans/:id
-POST           /api/plans/:id/start|complete|partial|postpone|ignore|cancel|modify
+GET/POST       /api/v1/plans
+GET/PUT/DELETE /api/v1/plans/:id
+POST           /api/v1/plans/:id/start|complete|partial|postpone|ignore|cancel|modify
 
-GET            /api/dashboard/today
-GET            /api/dashboard/summary
+GET            /api/v1/dashboard/today
+GET            /api/v1/dashboard/summary
 
-GET/POST       /api/sessions
-GET            /api/sessions/:id
+GET/POST       /api/v1/sessions
+GET            /api/v1/sessions/:id
 
-GET/POST       /api/logs
-GET/PUT/DELETE /api/logs/:id
+GET/POST       /api/v1/logs
+GET/PUT/DELETE /api/v1/logs/:id
 
-GET            /api/analytics/overview
-GET            /api/analytics/plans-by-day
-GET            /api/analytics/status-distribution
-GET            /api/analytics/time-by-direction
-GET            /api/analytics/planned-vs-executed
+GET            /api/v1/analytics/overview
+GET            /api/v1/analytics/plans-by-day
+GET            /api/v1/analytics/status-distribution
+GET            /api/v1/analytics/time-by-direction
+GET            /api/v1/analytics/planned-vs-executed
 ```
 
-## Integração futura com backend
+## Integração com backend
 
-O backend será Spring Boot + Keycloak. Em produção, o build estático do frontend será servido pelo próprio Spring Boot.
+O backend é Spring Boot + Keycloak. Em validação/deploy, o build estático do frontend pode ser servido pelo próprio Spring Boot.
 
 Para ativar o backend real:
 ```env
 VITE_API_MODE=real
-VITE_API_BASE_URL=http://localhost:8080/api
+VITE_API_BASE_URL=http://localhost:8080/api/v1
 ```
 
 Para ativar Keycloak:
@@ -181,8 +196,6 @@ VITE_KEYCLOAK_ENABLED=true
 
 ## Próximos passos
 
-- [ ] Integração com backend Spring Boot
-- [ ] Autenticação real via Keycloak
 - [ ] Docker Compose (frontend + backend + Keycloak + PostgreSQL)
 - [ ] Deploy no genesis-lab
 - [ ] TanStack Query para cache de dados

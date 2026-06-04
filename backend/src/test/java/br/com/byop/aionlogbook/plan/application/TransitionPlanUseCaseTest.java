@@ -8,6 +8,7 @@ import br.com.byop.aionlogbook.plan.dto.*;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanEventRepository;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanRepository;
 import br.com.byop.aionlogbook.plan.mapper.PlanMapper;
+import br.com.byop.aionlogbook.session.application.AutomaticSessionLogRequest;
 import br.com.byop.aionlogbook.session.application.SessionLogService;
 import br.com.byop.aionlogbook.shared.error.InvalidPlanTransitionException;
 import br.com.byop.aionlogbook.shared.error.PlanInProgressConflictException;
@@ -114,7 +115,8 @@ class TransitionPlanUseCaseTest {
             when(planRepository.existsByUserIdAndStatusAndIdNot(userId, PlanStatus.IN_PROGRESS, planId))
                     .thenReturn(true);
 
-            assertThatThrownBy(() -> useCase.start(userId, planId, new StartPlanRequest("Started")))
+            var request = new StartPlanRequest("Started");
+            assertThatThrownBy(() -> useCase.start(userId, planId, request))
                     .isInstanceOf(PlanInProgressConflictException.class);
 
             verify(planRepository, never()).save(any());
@@ -128,7 +130,8 @@ class TransitionPlanUseCaseTest {
 
             when(planRepository.findByIdAndUserId(planId, userId)).thenReturn(Optional.of(plan));
 
-            assertThatThrownBy(() -> useCase.start(userId, planId, new StartPlanRequest("Started")))
+            var request = new StartPlanRequest("Started");
+            assertThatThrownBy(() -> useCase.start(userId, planId, request))
                     .isInstanceOf(InvalidPlanTransitionException.class);
 
             verify(planRepository, never()).existsByUserIdAndStatusAndIdNot(any(), any(), any());
@@ -165,13 +168,15 @@ class TransitionPlanUseCaseTest {
 
             verify(sessionLogService).createAutomaticFromPlan(
                     userId,
-                    planId,
-                    plan.getDirectionId(),
-                    OffsetDateTime.ofInstant(NOW.minusSeconds(1800), ZONE),
-                    OffsetDateTime.ofInstant(NOW, ZONE),
-                    30,
-                    "Plano concluído",
-                    "Completed"
+                    new AutomaticSessionLogRequest(
+                            planId,
+                            plan.getDirectionId(),
+                            OffsetDateTime.ofInstant(NOW.minusSeconds(1800), ZONE),
+                            OffsetDateTime.ofInstant(NOW, ZONE),
+                            30,
+                            "Plano concluído",
+                            "Completed"
+                    )
             );
         }
 
@@ -189,13 +194,15 @@ class TransitionPlanUseCaseTest {
 
             verify(sessionLogService).createAutomaticFromPlan(
                     userId,
-                    planId,
-                    plan.getDirectionId(),
-                    OffsetDateTime.ofInstant(NOW.minusSeconds(1800), ZONE),
-                    OffsetDateTime.ofInstant(NOW, ZONE),
-                    10,
-                    "Plano concluído",
-                    "Completed"
+                    new AutomaticSessionLogRequest(
+                            planId,
+                            plan.getDirectionId(),
+                            OffsetDateTime.ofInstant(NOW.minusSeconds(1800), ZONE),
+                            OffsetDateTime.ofInstant(NOW, ZONE),
+                            10,
+                            "Plano concluído",
+                            "Completed"
+                    )
             );
         }
 
@@ -205,7 +212,8 @@ class TransitionPlanUseCaseTest {
 
             when(planRepository.findByIdAndUserId(planId, userId)).thenReturn(Optional.of(plan));
 
-            assertThatThrownBy(() -> useCase.complete(userId, planId, new CompletePlanRequest(null, "Completed")))
+            var request = new CompletePlanRequest(null, "Completed");
+            assertThatThrownBy(() -> useCase.complete(userId, planId, request))
                     .isInstanceOf(InvalidPlanTransitionException.class);
 
             verify(planRepository, never()).save(any());
@@ -241,13 +249,15 @@ class TransitionPlanUseCaseTest {
 
             verify(sessionLogService).createAutomaticFromPlan(
                     userId,
-                    planId,
-                    plan.getDirectionId(),
-                    OffsetDateTime.ofInstant(NOW.minusSeconds(900), ZONE),
-                    OffsetDateTime.ofInstant(NOW, ZONE),
-                    15,
-                    "Plano parcialmente executado",
-                    "Partial"
+                    new AutomaticSessionLogRequest(
+                            planId,
+                            plan.getDirectionId(),
+                            OffsetDateTime.ofInstant(NOW.minusSeconds(900), ZONE),
+                            OffsetDateTime.ofInstant(NOW, ZONE),
+                            15,
+                            "Plano parcialmente executado",
+                            "Partial"
+                    )
             );
         }
 
@@ -267,13 +277,15 @@ class TransitionPlanUseCaseTest {
 
             verify(sessionLogService).createAutomaticFromPlan(
                     userId,
-                    planId,
-                    plan.getDirectionId(),
-                    null,
-                    OffsetDateTime.ofInstant(NOW, ZONE),
-                    12,
-                    "Plano parcialmente executado",
-                    "Partial"
+                    new AutomaticSessionLogRequest(
+                            planId,
+                            plan.getDirectionId(),
+                            null,
+                            OffsetDateTime.ofInstant(NOW, ZONE),
+                            12,
+                            "Plano parcialmente executado",
+                            "Partial"
+                    )
             );
         }
 
@@ -289,16 +301,7 @@ class TransitionPlanUseCaseTest {
             assertThat(plan.getStatus()).isEqualTo(PlanStatus.PARTIAL);
             assertThat(plan.getActualMinutes()).isNull();
 
-            verify(sessionLogService, never()).createAutomaticFromPlan(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-            );
+            verify(sessionLogService, never()).createAutomaticFromPlan(any(), any());
         }
     }
 
@@ -455,7 +458,8 @@ class TransitionPlanUseCaseTest {
         void shouldThrowResourceNotFoundWhenPlanDoesNotBelongToUser() {
             when(planRepository.findByIdAndUserId(planId, userId)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> useCase.start(userId, planId, new StartPlanRequest("Started")))
+            var request = new StartPlanRequest("Started");
+            assertThatThrownBy(() -> useCase.start(userId, planId, request))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessage("Plan not found");
 

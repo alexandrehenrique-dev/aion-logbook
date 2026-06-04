@@ -228,6 +228,7 @@ class GlobalExceptionHandlerTest {
 
     private HttpServletRequest request() {
         HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("GET");
         when(request.getRequestURI()).thenReturn(PATH);
         return request;
     }

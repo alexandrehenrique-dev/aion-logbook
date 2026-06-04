@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Bug, X } from 'lucide-react';
 import { bugReportService } from '../../services/bugReportService';
 import type { BugReportSeverity } from '../../services/bugReportService';
+import { toast } from '../../utils/toast';
 
 const SEVERITY_LABELS: Record<BugReportSeverity, string> = {
   LOW: 'Baixa',
@@ -37,9 +38,11 @@ export function BugReportModal({ onClose }: Props) {
     try {
       await bugReportService.create({ ...form, url: window.location.href, timestamp: new Date().toISOString() });
       setStatus('success');
+      toast.success('Bug report enviado', 'Obrigado pelo feedback!');
       setTimeout(onClose, 1500);
     } catch {
       setStatus('error');
+      toast.error('Erro ao enviar report');
     }
   };
 

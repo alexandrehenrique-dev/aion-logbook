@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { Toaster } from 'sonner';
 import { AuthProvider } from '../features/auth/AuthContext';
 import { ThemeProvider } from './providers/ThemeProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -21,6 +22,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <Toaster richColors position="top-right" />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />

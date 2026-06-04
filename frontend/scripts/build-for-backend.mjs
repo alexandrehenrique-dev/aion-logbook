@@ -7,8 +7,21 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const frontendRoot = resolve(__dirname, '..');
 const staticDir = resolve(frontendRoot, '../backend/src/main/resources/static');
 
+function hasCommand(command) {
+  try {
+    execSync(`${command} --version`, { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const packageManager = hasCommand('pnpm') ? 'pnpm' : 'npm';
+const viteCommand = packageManager === 'pnpm' ? 'pnpm vite' : 'npx vite';
+
 console.log('Building frontend for Spring Boot backend...');
 console.log(`Target: ${staticDir}`);
+console.log(`Package manager: ${packageManager}`);
 
 if (!existsSync(staticDir)) {
   console.log('Creating static directory...');
@@ -22,7 +35,7 @@ if (!existsSync(staticDir)) {
 }
 
 try {
-  execSync(`pnpm tsc -b && pnpm vite build --outDir "${staticDir}" --emptyOutDir`, {
+  execSync(`${packageManager} run typecheck && ${viteCommand} build --outDir "${staticDir}" --emptyOutDir`, {
     cwd: frontendRoot,
     stdio: 'inherit',
   });

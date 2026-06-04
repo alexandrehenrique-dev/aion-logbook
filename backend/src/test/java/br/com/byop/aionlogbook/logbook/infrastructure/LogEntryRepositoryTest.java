@@ -1,5 +1,6 @@
 package br.com.byop.aionlogbook.logbook.infrastructure;
 
+import br.com.byop.aionlogbook.logbook.application.LogEntrySearchCriteria;
 import br.com.byop.aionlogbook.logbook.domain.LogEntry;
 import br.com.byop.aionlogbook.logbook.domain.LogEntryType;
 import org.junit.jupiter.api.Test;
@@ -12,9 +13,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.Instant;
 import java.util.List;
@@ -32,7 +34,7 @@ class LogEntryRepositoryTest {
     private JdbcTemplate jdbcTemplate;
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+    static PostgreSQLContainer postgres = new PostgreSQLContainer(DockerImageName.parse("postgres:16-alpine"))
             .withDatabaseName("aion_logbook_test")
             .withUsername("test")
             .withPassword("test");
@@ -86,17 +88,8 @@ class LogEntryRepositoryTest {
         entityManager.persist(logEntry(userId, LogEntryType.IDEA));
         entityManager.flush();
 
-        var result = repository.findByFilters(
-                userId,
-                LogEntryType.IDEA.name(),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                PageRequest.of(0, 10)
-        );
+        var criteria = new LogEntrySearchCriteria(LogEntryType.IDEA, null, null, null, null, null, null);
+        var result = repository.findByFilters(userId, criteria, PageRequest.of(0, 10));
 
         assertThat(result.getContent())
                 .hasSize(1)
@@ -114,17 +107,8 @@ class LogEntryRepositoryTest {
         entityManager.persist(logEntry(userId, LogEntryType.LEARNING));
         entityManager.flush();
 
-        var result = repository.findByFilters(
-                userId,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                "dor",
-                PageRequest.of(0, 10)
-        );
+        var criteria = new LogEntrySearchCriteria(null, null, null, null, null, null, "dor");
+        var result = repository.findByFilters(userId, criteria, PageRequest.of(0, 10));
 
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().getFirst().getTitle()).contains("dor");

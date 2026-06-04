@@ -12,10 +12,20 @@ export type AnalyticsPlannedVsExecuted = {
   executedMinutes: number;
 };
 
+type DateRange = { dateFrom?: string; dateTo?: string };
+
+function toQuery(params: DateRange) {
+  const q = new URLSearchParams();
+  if (params.dateFrom) q.set('dateFrom', params.dateFrom);
+  if (params.dateTo) q.set('dateTo', params.dateTo);
+  const s = q.toString();
+  return s ? `?${s}` : '';
+}
+
 export const analyticsService = {
-  getOverview: () => http.get<AnalyticsOverview>('/analytics/overview'),
-  getPlansByDay: () => http.get<AnalyticsByDay[]>('/analytics/plans-by-day'),
-  getStatusDistribution: () => http.get<AnalyticsStatusDistribution[]>('/analytics/status-distribution'),
-  getTimeByDirection: () => http.get<AnalyticsTimeByDirection[]>('/analytics/time-by-direction'),
-  getPlannedVsExecuted: () => http.get<AnalyticsPlannedVsExecuted[]>('/analytics/planned-vs-executed'),
+  getOverview: (p: DateRange = {}) => http.get<AnalyticsOverview>(`/analytics/overview${toQuery(p)}`),
+  getPlansByDay: (p: DateRange = {}) => http.get<AnalyticsByDay[]>(`/analytics/plans-by-day${toQuery(p)}`),
+  getStatusDistribution: (p: DateRange = {}) => http.get<AnalyticsStatusDistribution[]>(`/analytics/status-distribution${toQuery(p)}`),
+  getTimeByDirection: (p: DateRange = {}) => http.get<AnalyticsTimeByDirection[]>(`/analytics/time-by-direction${toQuery(p)}`),
+  getPlannedVsExecuted: (p: DateRange = {}) => http.get<AnalyticsPlannedVsExecuted[]>(`/analytics/planned-vs-executed${toQuery(p)}`),
 };

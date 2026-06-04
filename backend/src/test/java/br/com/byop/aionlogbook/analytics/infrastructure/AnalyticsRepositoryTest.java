@@ -9,9 +9,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -34,7 +35,7 @@ class AnalyticsRepositoryTest {
     private AnalyticsRepository repository;
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+    static PostgreSQLContainer postgres = new PostgreSQLContainer(DockerImageName.parse("postgres:16-alpine"))
             .withDatabaseName("aion_logbook_test")
             .withUsername("test")
             .withPassword("test");
@@ -56,11 +57,13 @@ class AnalyticsRepositoryTest {
 
         var result = repository.overview(userId, null, null);
 
-        assertThat(result.plansCreated()).isZero();
-        assertThat(result.plansCompleted()).isZero();
-        assertThat(result.plansPartial()).isZero();
-        assertThat(result.totalTimeMinutes()).isZero();
-        assertThat(result.weeklyTimeMinutes()).isZero();
+        assertThat(result).satisfies(r -> {
+            assertThat(r.plansCreated()).isZero();
+            assertThat(r.plansCompleted()).isZero();
+            assertThat(r.plansPartial()).isZero();
+            assertThat(r.totalTimeMinutes()).isZero();
+            assertThat(r.weeklyTimeMinutes()).isZero();
+        });
     }
 
     @Test
@@ -78,11 +81,13 @@ class AnalyticsRepositoryTest {
 
         var result = repository.overview(userId, null, null);
 
-        assertThat(result.plansCreated()).isEqualTo(3);
-        assertThat(result.plansCompleted()).isEqualTo(1);
-        assertThat(result.plansPartial()).isEqualTo(1);
-        assertThat(result.plansMissed()).isEqualTo(1);
-        assertThat(result.totalTimeMinutes()).isEqualTo(50);
+        assertThat(result).satisfies(r -> {
+            assertThat(r.plansCreated()).isEqualTo(3);
+            assertThat(r.plansCompleted()).isEqualTo(1);
+            assertThat(r.plansPartial()).isEqualTo(1);
+            assertThat(r.plansMissed()).isEqualTo(1);
+            assertThat(r.totalTimeMinutes()).isEqualTo(50);
+        });
     }
 
     @Test
@@ -101,9 +106,11 @@ class AnalyticsRepositoryTest {
                 LocalDate.of(2026, 6, 1)
         );
 
-        assertThat(result.plansCreated()).isEqualTo(1);
-        assertThat(result.plansCompleted()).isEqualTo(1);
-        assertThat(result.totalTimeMinutes()).isEqualTo(40);
+        assertThat(result).satisfies(r -> {
+            assertThat(r.plansCreated()).isEqualTo(1);
+            assertThat(r.plansCompleted()).isEqualTo(1);
+            assertThat(r.totalTimeMinutes()).isEqualTo(40);
+        });
     }
 
     @Test
@@ -118,13 +125,17 @@ class AnalyticsRepositoryTest {
 
         assertThat(result).hasSize(2);
 
-        assertThat(result.getFirst().date()).isEqualTo(LocalDate.of(2026, 6, 1));
-        assertThat(result.getFirst().planned()).isEqualTo(2);
-        assertThat(result.getFirst().executed()).isEqualTo(2);
+        assertThat(result.getFirst()).satisfies(first -> {
+            assertThat(first.date()).isEqualTo(LocalDate.of(2026, 6, 1));
+            assertThat(first.planned()).isEqualTo(2);
+            assertThat(first.executed()).isEqualTo(2);
+        });
 
-        assertThat(result.get(1).date()).isEqualTo(LocalDate.of(2026, 6, 2));
-        assertThat(result.get(1).planned()).isEqualTo(1);
-        assertThat(result.get(1).executed()).isZero();
+        assertThat(result.get(1)).satisfies(second -> {
+            assertThat(second.date()).isEqualTo(LocalDate.of(2026, 6, 2));
+            assertThat(second.planned()).isEqualTo(1);
+            assertThat(second.executed()).isZero();
+        });
     }
 
     @Test
@@ -139,8 +150,7 @@ class AnalyticsRepositoryTest {
 
         assertThat(result).hasSize(2);
         assertThat(result)
-                .anyMatch(item -> item.status().equals("COMPLETED") && item.count() == 2);
-        assertThat(result)
+                .anyMatch(item -> item.status().equals("COMPLETED") && item.count() == 2)
                 .anyMatch(item -> item.status().equals("PARTIAL") && item.count() == 1);
     }
 
@@ -164,11 +174,13 @@ class AnalyticsRepositoryTest {
         var result = repository.timeByDirection(userId, null, null);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().directionId()).isEqualTo(directionId);
-        assertThat(result.getFirst().directionName()).isEqualTo("Código");
-        assertThat(result.getFirst().color()).isEqualTo("#22c55e");
-        assertThat(result.getFirst().totalMinutes()).isEqualTo(60);
-        assertThat(result.getFirst().sessionsCount()).isEqualTo(2);
+        assertThat(result.getFirst()).satisfies(first -> {
+            assertThat(first.directionId()).isEqualTo(directionId);
+            assertThat(first.directionName()).isEqualTo("Código");
+            assertThat(first.color()).isEqualTo("#22c55e");
+            assertThat(first.totalMinutes()).isEqualTo(60);
+            assertThat(first.sessionsCount()).isEqualTo(2);
+        });
     }
 
     @Test
@@ -191,9 +203,11 @@ class AnalyticsRepositoryTest {
         var result = repository.plannedVsExecuted(userId, null, null);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().date()).isEqualTo(LocalDate.of(2026, 6, 1));
-        assertThat(result.getFirst().plannedMinutes()).isEqualTo(90);
-        assertThat(result.getFirst().executedMinutes()).isEqualTo(45);
+        assertThat(result.getFirst()).satisfies(first -> {
+            assertThat(first.date()).isEqualTo(LocalDate.of(2026, 6, 1));
+            assertThat(first.plannedMinutes()).isEqualTo(90);
+            assertThat(first.executedMinutes()).isEqualTo(45);
+        });
     }
 
     @Test
@@ -205,8 +219,10 @@ class AnalyticsRepositoryTest {
         var result = repository.plannedVsExecuted(userId, null, null);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().plannedMinutes()).isZero();
-        assertThat(result.getFirst().executedMinutes()).isEqualTo(25);
+        assertThat(result.getFirst()).satisfies(first -> {
+            assertThat(first.plannedMinutes()).isZero();
+            assertThat(first.executedMinutes()).isEqualTo(25);
+        });
     }
 
     private UUID createUserProfile() {

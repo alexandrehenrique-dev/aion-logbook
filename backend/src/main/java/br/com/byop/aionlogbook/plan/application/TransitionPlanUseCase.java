@@ -9,6 +9,7 @@ import br.com.byop.aionlogbook.plan.dto.*;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanEventRepository;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanRepository;
 import br.com.byop.aionlogbook.plan.mapper.PlanMapper;
+import br.com.byop.aionlogbook.session.application.AutomaticSessionLogRequest;
 import br.com.byop.aionlogbook.session.application.SessionLogService;
 import br.com.byop.aionlogbook.shared.error.InvalidPlanTransitionException;
 import br.com.byop.aionlogbook.shared.error.PlanInProgressConflictException;
@@ -83,7 +84,7 @@ public class TransitionPlanUseCase {
                 PlanStatus.IN_PROGRESS,
                 PlanEventType.STARTED,
                 request.description(),
-                now -> plan.setStartedAt(now)
+                plan::setStartedAt
         );
 
         return planMapper.toResponse(savedPlan);
@@ -108,13 +109,15 @@ public class TransitionPlanUseCase {
 
         sessionLogService.createAutomaticFromPlan(
                 userId,
-                savedPlan.getId(),
-                savedPlan.getDirectionId(),
-                toOffsetDateTime(savedPlan.getStartedAt()),
-                toOffsetDateTime(savedPlan.getFinishedAt()),
-                savedPlan.getActualMinutes(),
-                "Plano concluído",
-                request.description()
+                new AutomaticSessionLogRequest(
+                        savedPlan.getId(),
+                        savedPlan.getDirectionId(),
+                        toOffsetDateTime(savedPlan.getStartedAt()),
+                        toOffsetDateTime(savedPlan.getFinishedAt()),
+                        savedPlan.getActualMinutes(),
+                        "Plano concluído",
+                        request.description()
+                )
         );
 
         return planMapper.toResponse(savedPlan);
@@ -141,13 +144,15 @@ public class TransitionPlanUseCase {
         if (savedPlan.getActualMinutes() != null && savedPlan.getActualMinutes() > 0) {
             sessionLogService.createAutomaticFromPlan(
                     userId,
-                    savedPlan.getId(),
-                    savedPlan.getDirectionId(),
-                    toOffsetDateTime(savedPlan.getStartedAt()),
-                    toOffsetDateTime(savedPlan.getFinishedAt()),
-                    savedPlan.getActualMinutes(),
-                    "Plano parcialmente executado",
-                    request.description()
+                    new AutomaticSessionLogRequest(
+                            savedPlan.getId(),
+                            savedPlan.getDirectionId(),
+                            toOffsetDateTime(savedPlan.getStartedAt()),
+                            toOffsetDateTime(savedPlan.getFinishedAt()),
+                            savedPlan.getActualMinutes(),
+                            "Plano parcialmente executado",
+                            request.description()
+                    )
             );
         }
 

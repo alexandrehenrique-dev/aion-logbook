@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -42,9 +40,6 @@ class LogEntryServiceTest {
     @Mock
     private LogEntryMapper logEntryMapper;
 
-    @Mock
-    private ObjectMapper objectMapper;
-
     private LogEntryService service;
 
     private final Clock clock = Clock.fixed(
@@ -59,7 +54,6 @@ class LogEntryServiceTest {
                 directionRepository,
                 planRepository,
                 logEntryMapper,
-                objectMapper,
                 clock
         );
     }

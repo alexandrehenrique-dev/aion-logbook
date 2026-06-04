@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-hidden="true">
+  <!-- Anéis externos -->
+  <circle cx="60" cy="60" r="57" stroke="rgba(168,213,223,0.08)" stroke-width="0.8"/>
+  <circle cx="60" cy="60" r="48" stroke="rgba(168,213,223,0.13)" stroke-width="1"/>
+  <circle cx="60" cy="60" r="38" stroke="rgba(168,213,223,0.18)" stroke-width="1.2"/>
+
+  <!-- Marcações cardeais (N S L O) -->
+  <line x1="60" y1="4"  x2="60" y2="16" stroke="rgba(168,213,223,0.35)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="60" y1="104" x2="60" y2="116" stroke="rgba(168,213,223,0.18)" stroke-width="1" stroke-linecap="round"/>
+  <line x1="4"  y1="60" x2="16" y2="60" stroke="rgba(168,213,223,0.18)" stroke-width="1" stroke-linecap="round"/>
+  <line x1="104" y1="60" x2="116" y2="60" stroke="rgba(168,213,223,0.18)" stroke-width="1" stroke-linecap="round"/>
+
+  <!-- Marcações intercardinal (mais finas) -->
+  <line x1="18"  y1="18"  x2="25"  y2="25"  stroke="rgba(168,213,223,0.1)" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="95"  y1="18"  x2="102" y2="25"  stroke="rgba(168,213,223,0.1)" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="18"  y1="102" x2="25"  y2="95"  stroke="rgba(168,213,223,0.08)" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="95"  y1="102" x2="102" y2="95"  stroke="rgba(168,213,223,0.08)" stroke-width="0.8" stroke-linecap="round"/>
+
+  <!-- Agulha Norte (brilhante — direção) -->
+  <polygon points="60,11 63.5,58 60,54 56.5,58" fill="#e8f4f7" opacity="0.95"/>
+
+  <!-- Agulha Sul (escura — passado) -->
+  <polygon points="60,109 63.5,62 60,66 56.5,62" fill="rgba(168,213,223,0.28)"/>
+
+  <!-- Centro — pino da bússola -->
+  <circle cx="60" cy="60" r="5.5" fill="rgba(44,95,111,0.8)" stroke="rgba(168,213,223,0.4)" stroke-width="1"/>
+  <circle cx="60" cy="60" r="2.5" fill="#a8d5df"/>
+</svg>

@@ -48,6 +48,14 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_BASE_PATH: /logbook/
+        VITE_API_MODE: real
+        VITE_API_BASE_URL: /logbook/api/v1
+        VITE_AUTH_MODE: keycloak
+        VITE_KEYCLOAK_ENABLED: "true"
+        VITE_KEYCLOAK_URL: http://192.168.0.77:8181
+        VITE_KEYCLOAK_REALM: aion-logbook
+        VITE_KEYCLOAK_CLIENT_ID: aion-logbook-web
+        VITE_ENABLE_NOTIFICATIONS: "false"
     container_name: aion-logbook-app
     restart: unless-stopped
     environment:

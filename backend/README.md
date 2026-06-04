@@ -36,6 +36,7 @@ br.com.byop.aionlogbook
 ├── identity
 ├── plan
 ├── security
+├── session
 └── shared
 ```
 
@@ -131,6 +132,10 @@ Todos os endpoints abaixo ficam sob a API privada versionada:
 | `POST` | `/api/v1/plans/{id}/ignore` | Ignora um plano permitido |
 | `POST` | `/api/v1/plans/{id}/cancel` | Cancela um plano nao terminal |
 | `POST` | `/api/v1/plans/{id}/modify` | Modifica campos operacionais de um plano nao terminal |
+| `GET` | `/api/v1/sessions` | Lista sessoes do usuario autenticado com filtros opcionais |
+| `POST` | `/api/v1/sessions` | Cria uma sessao manual |
+| `GET` | `/api/v1/sessions/{id}` | Busca uma sessao do usuario autenticado |
+| `PUT` | `/api/v1/sessions/{id}` | Atualiza uma sessao do usuario autenticado |
 
 ## Seguranca
 
@@ -182,6 +187,53 @@ Regras principais:
 - A listagem permite filtros opcionais por `status`, `directionId` e `plannedDate`.
 - Criacoes e atualizacoes registram eventos em `plan_events`.
 
+## Dominio SessionLog
+
+`SessionLog` registra sessoes realizadas pelo usuario autenticado, criadas manualmente ou de forma automatica a partir de transicoes de planos.
+
+Endpoints disponiveis:
+
+| Metodo | Endpoint | Descricao |
+|---|---|---|
+| `GET` | `/api/v1/sessions` | Lista sessoes do usuario autenticado |
+| `POST` | `/api/v1/sessions` | Cria uma sessao manual |
+| `GET` | `/api/v1/sessions/{id}` | Busca uma sessao por ID |
+| `PUT` | `/api/v1/sessions/{id}` | Atualiza uma sessao |
+
+Filtros suportados na listagem:
+
+- `directionId`
+- `planId`
+- `dateFrom`
+- `dateTo`
+- `page`
+- `size`
+- `sort`
+
+Regras principais:
+
+- `userId` vem sempre do JWT/contexto autenticado.
+- `planId` e `directionId`, quando informados, devem pertencer ao usuario.
+- Recurso inexistente ou pertencente a outro usuario retorna `404`.
+- Nao ha endpoint `DELETE` para sessoes no MVP.
+- A transicao `complete` de um plano `IN_PROGRESS` cria uma sessao automatica.
+- A transicao `partial` cria uma sessao automatica quando houver duracao.
+- `durationMinutes` usa `actualMinutes` quando informado; caso contrario, calcula a diferenca entre `startedAt` e `finishedAt`.
+
+Exemplo de payload para criacao manual:
+
+```json
+{
+  "planId": "00000000-0000-0000-0000-000000000000",
+  "directionId": "00000000-0000-0000-0000-000000000000",
+  "startedAt": "2026-06-03T20:00:00-03:00",
+  "finishedAt": "2026-06-03T20:45:00-03:00",
+  "actualMinutes": 45,
+  "result": "Sessão concluída",
+  "notes": "Notas livres da sessão"
+}
+```
+
 ## ETAPA 7 - Transicoes de Plan
 
 A Etapa 7 implementa as transicoes operacionais de `Plan` no backend. Cada transicao busca o recurso por `id + userId`, persiste o novo estado no plano e registra um evento em `plan_events` via `PlanEventRepository`.
@@ -218,6 +270,7 @@ Regras e erros esperados:
 - Plano inexistente ou pertencente a outro usuario retorna `404 RESOURCE_NOT_FOUND`.
 - Transicao invalida retorna `400 INVALID_TRANSITION`.
 - `start` atualiza `startedAt`; `complete` e `partial` atualizam `finishedAt`; `actualMinutes` e atualizado quando aplicavel.
+- `complete` cria `SessionLog` automatico; `partial` cria `SessionLog` automatico quando houver duracao.
 - `lastStatusChangedAt` e atualizado em toda transicao desta etapa.
 
 Scheduler e dashboard ainda nao fazem parte desta etapa.

@@ -52,4 +52,6 @@ public interface PlanRepository extends JpaRepository<Plan, UUID> {
             PlanStatus status,
             UUID ignoredPlanId
     );
+
+    boolean existsByIdAndUserId(UUID id, UUID userId);
 }

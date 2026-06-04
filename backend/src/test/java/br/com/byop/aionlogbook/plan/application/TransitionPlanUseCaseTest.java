@@ -8,6 +8,7 @@ import br.com.byop.aionlogbook.plan.dto.*;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanEventRepository;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanRepository;
 import br.com.byop.aionlogbook.plan.mapper.PlanMapper;
+import br.com.byop.aionlogbook.session.application.SessionLogService;
 import br.com.byop.aionlogbook.shared.error.InvalidPlanTransitionException;
 import br.com.byop.aionlogbook.shared.error.PlanInProgressConflictException;
 import br.com.byop.aionlogbook.shared.error.ResourceNotFoundException;
@@ -21,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +47,9 @@ class TransitionPlanUseCaseTest {
     @Mock
     private PlanMapper planMapper;
 
+    @Mock
+    private SessionLogService sessionLogService;
+
     private TransitionPlanUseCase useCase;
 
     private UUID userId;
@@ -61,7 +66,8 @@ class TransitionPlanUseCaseTest {
                 planRepository,
                 planEventRepository,
                 planMapper,
-                clock
+                clock,
+                sessionLogService
         );
     }
 
@@ -96,6 +102,8 @@ class TransitionPlanUseCaseTest {
             assertThat(event.getToStatus()).isEqualTo(PlanStatus.IN_PROGRESS);
             assertThat(event.getDescription()).isEqualTo("Started");
             assertThat(event.getCreatedAt()).isEqualTo(NOW);
+
+            verifyNoInteractions(sessionLogService);
         }
 
         @Test
@@ -111,6 +119,7 @@ class TransitionPlanUseCaseTest {
 
             verify(planRepository, never()).save(any());
             verify(planEventRepository, never()).save(any());
+            verifyNoInteractions(sessionLogService);
         }
 
         @Test
@@ -125,6 +134,7 @@ class TransitionPlanUseCaseTest {
             verify(planRepository, never()).existsByUserIdAndStatusAndIdNot(any(), any(), any());
             verify(planRepository, never()).save(any());
             verify(planEventRepository, never()).save(any());
+            verifyNoInteractions(sessionLogService);
         }
     }
 
@@ -132,7 +142,7 @@ class TransitionPlanUseCaseTest {
     class Complete {
 
         @Test
-        void shouldCompleteInProgressPlan() {
+        void shouldCompleteInProgressPlanAndCreateAutomaticSessionLog() {
             var plan = plan(PlanStatus.IN_PROGRESS);
             plan.setStartedAt(NOW.minusSeconds(1800));
 
@@ -152,10 +162,21 @@ class TransitionPlanUseCaseTest {
             assertThat(eventCaptor.getValue().getEventType()).isEqualTo(PlanEventType.COMPLETED);
             assertThat(eventCaptor.getValue().getFromStatus()).isEqualTo(PlanStatus.IN_PROGRESS);
             assertThat(eventCaptor.getValue().getToStatus()).isEqualTo(PlanStatus.COMPLETED);
+
+            verify(sessionLogService).createAutomaticFromPlan(
+                    userId,
+                    planId,
+                    plan.getDirectionId(),
+                    OffsetDateTime.ofInstant(NOW.minusSeconds(1800), ZONE),
+                    OffsetDateTime.ofInstant(NOW, ZONE),
+                    30,
+                    "Plano concluído",
+                    "Completed"
+            );
         }
 
         @Test
-        void shouldUseProvidedActualMinutesWhenCompleting() {
+        void shouldUseProvidedActualMinutesWhenCompletingAndCreateAutomaticSessionLog() {
             var plan = plan(PlanStatus.IN_PROGRESS);
             plan.setStartedAt(NOW.minusSeconds(1800));
 
@@ -165,6 +186,17 @@ class TransitionPlanUseCaseTest {
             useCase.complete(userId, planId, new CompletePlanRequest(10, "Completed"));
 
             assertThat(plan.getActualMinutes()).isEqualTo(10);
+
+            verify(sessionLogService).createAutomaticFromPlan(
+                    userId,
+                    planId,
+                    plan.getDirectionId(),
+                    OffsetDateTime.ofInstant(NOW.minusSeconds(1800), ZONE),
+                    OffsetDateTime.ofInstant(NOW, ZONE),
+                    10,
+                    "Plano concluído",
+                    "Completed"
+            );
         }
 
         @Test
@@ -178,6 +210,7 @@ class TransitionPlanUseCaseTest {
 
             verify(planRepository, never()).save(any());
             verify(planEventRepository, never()).save(any());
+            verifyNoInteractions(sessionLogService);
         }
     }
 
@@ -185,7 +218,7 @@ class TransitionPlanUseCaseTest {
     class Partial {
 
         @Test
-        void shouldPartiallyCompleteInProgressPlan() {
+        void shouldPartiallyCompleteInProgressPlanAndCreateAutomaticSessionLog() {
             var plan = plan(PlanStatus.IN_PROGRESS);
             plan.setStartedAt(NOW.minusSeconds(900));
 
@@ -205,6 +238,67 @@ class TransitionPlanUseCaseTest {
             assertThat(eventCaptor.getValue().getEventType()).isEqualTo(PlanEventType.PARTIAL_COMPLETED);
             assertThat(eventCaptor.getValue().getFromStatus()).isEqualTo(PlanStatus.IN_PROGRESS);
             assertThat(eventCaptor.getValue().getToStatus()).isEqualTo(PlanStatus.PARTIAL);
+
+            verify(sessionLogService).createAutomaticFromPlan(
+                    userId,
+                    planId,
+                    plan.getDirectionId(),
+                    OffsetDateTime.ofInstant(NOW.minusSeconds(900), ZONE),
+                    OffsetDateTime.ofInstant(NOW, ZONE),
+                    15,
+                    "Plano parcialmente executado",
+                    "Partial"
+            );
+        }
+
+        @Test
+        void shouldCreateAutomaticSessionLogWhenPartialHasProvidedActualMinutesWithoutStartedAt() {
+            var plan = plan(PlanStatus.IN_PROGRESS);
+
+            when(planRepository.findByIdAndUserId(planId, userId)).thenReturn(Optional.of(plan));
+            when(planRepository.save(plan)).thenReturn(plan);
+
+            useCase.partial(userId, planId, new PartialPlanRequest(12, "Tired", "Partial"));
+
+            assertThat(plan.getStatus()).isEqualTo(PlanStatus.PARTIAL);
+            assertThat(plan.getReason()).isEqualTo("Tired");
+            assertThat(plan.getFinishedAt()).isEqualTo(NOW);
+            assertThat(plan.getActualMinutes()).isEqualTo(12);
+
+            verify(sessionLogService).createAutomaticFromPlan(
+                    userId,
+                    planId,
+                    plan.getDirectionId(),
+                    null,
+                    OffsetDateTime.ofInstant(NOW, ZONE),
+                    12,
+                    "Plano parcialmente executado",
+                    "Partial"
+            );
+        }
+
+        @Test
+        void shouldNotCreateAutomaticSessionLogWhenPartialHasNoDuration() {
+            var plan = plan(PlanStatus.IN_PROGRESS);
+
+            when(planRepository.findByIdAndUserId(planId, userId)).thenReturn(Optional.of(plan));
+            when(planRepository.save(plan)).thenReturn(plan);
+
+            useCase.partial(userId, planId, new PartialPlanRequest(null, "Tired", "Partial"));
+
+            assertThat(plan.getStatus()).isEqualTo(PlanStatus.PARTIAL);
+            assertThat(plan.getActualMinutes()).isNull();
+
+            verify(sessionLogService, never()).createAutomaticFromPlan(
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any()
+            );
         }
     }
 
@@ -231,6 +325,7 @@ class TransitionPlanUseCaseTest {
             verify(planEventRepository).save(eventCaptor.capture());
 
             assertThat(eventCaptor.getValue().getEventType()).isEqualTo(PlanEventType.POSTPONED);
+            verifyNoInteractions(sessionLogService);
         }
     }
 
@@ -253,6 +348,7 @@ class TransitionPlanUseCaseTest {
             verify(planEventRepository).save(eventCaptor.capture());
 
             assertThat(eventCaptor.getValue().getEventType()).isEqualTo(PlanEventType.IGNORED);
+            verifyNoInteractions(sessionLogService);
         }
     }
 
@@ -275,6 +371,7 @@ class TransitionPlanUseCaseTest {
             verify(planEventRepository).save(eventCaptor.capture());
 
             assertThat(eventCaptor.getValue().getEventType()).isEqualTo(PlanEventType.CANCELED);
+            verifyNoInteractions(sessionLogService);
         }
     }
 
@@ -320,6 +417,7 @@ class TransitionPlanUseCaseTest {
             assertThat(eventCaptor.getValue().getEventType()).isEqualTo(PlanEventType.MODIFIED);
             assertThat(eventCaptor.getValue().getFromStatus()).isEqualTo(PlanStatus.SCHEDULED);
             assertThat(eventCaptor.getValue().getToStatus()).isEqualTo(PlanStatus.SCHEDULED);
+            verifyNoInteractions(sessionLogService);
         }
 
         @Test
@@ -346,6 +444,7 @@ class TransitionPlanUseCaseTest {
 
             verify(planRepository, never()).save(any());
             verify(planEventRepository, never()).save(any());
+            verifyNoInteractions(sessionLogService);
         }
     }
 
@@ -362,6 +461,7 @@ class TransitionPlanUseCaseTest {
 
             verify(planRepository, never()).save(any());
             verify(planEventRepository, never()).save(any());
+            verifyNoInteractions(sessionLogService);
         }
     }
 

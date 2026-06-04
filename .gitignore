@@ -53,6 +53,7 @@ target/
 *.jar
 *.war
 *.ear
+target/site/jacoco/
 
 # Maven / Gradle
 .mvn/wrapper/maven-wrapper.jar
@@ -62,15 +63,19 @@ target/
 # Spring local configs
 application-local.yml
 application-local.yaml
+application-local.properties
 !application-local.example.yml
 !application-local.example.yaml
 application-local-override.yml
 application-dev-local.yml
 application-dev-local.yaml
+application-dev-local.properties
 application-*.local.yml
 application-*.local.yaml
+application-*.local.properties
 application-secret.yml
 application-secret.yaml
+application-secret.properties
 
 # Keycloak / Docker local
 keycloak-data/

@@ -9,6 +9,7 @@ import br.com.byop.aionlogbook.plan.dto.*;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanEventRepository;
 import br.com.byop.aionlogbook.plan.infrastructure.PlanRepository;
 import br.com.byop.aionlogbook.plan.mapper.PlanMapper;
+import br.com.byop.aionlogbook.session.application.SessionLogService;
 import br.com.byop.aionlogbook.shared.error.InvalidPlanTransitionException;
 import br.com.byop.aionlogbook.shared.error.PlanInProgressConflictException;
 import br.com.byop.aionlogbook.shared.error.ResourceNotFoundException;
@@ -16,10 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,18 +30,21 @@ public class TransitionPlanUseCase {
     private final PlanEventRepository planEventRepository;
     private final PlanMapper planMapper;
     private final Clock clock;
+    private final SessionLogService sessionLogService;
 
     @Autowired
     public TransitionPlanUseCase(
             PlanRepository planRepository,
             PlanEventRepository planEventRepository,
-            PlanMapper planMapper
+            PlanMapper planMapper,
+            SessionLogService sessionLogService
     ) {
         this(
                 planRepository,
                 planEventRepository,
                 planMapper,
-                Clock.system(APPLICATION_ZONE)
+                Clock.system(APPLICATION_ZONE),
+                sessionLogService
         );
     }
 
@@ -51,12 +52,14 @@ public class TransitionPlanUseCase {
             PlanRepository planRepository,
             PlanEventRepository planEventRepository,
             PlanMapper planMapper,
-            Clock clock
+            Clock clock,
+            SessionLogService sessionLogService
     ) {
         this.planRepository = planRepository;
         this.planEventRepository = planEventRepository;
         this.planMapper = planMapper;
         this.clock = clock;
+        this.sessionLogService = sessionLogService;
     }
 
     @Transactional
@@ -103,6 +106,17 @@ public class TransitionPlanUseCase {
                 }
         );
 
+        sessionLogService.createAutomaticFromPlan(
+                userId,
+                savedPlan.getId(),
+                savedPlan.getDirectionId(),
+                toOffsetDateTime(savedPlan.getStartedAt()),
+                toOffsetDateTime(savedPlan.getFinishedAt()),
+                savedPlan.getActualMinutes(),
+                "Plano concluído",
+                request.description()
+        );
+
         return planMapper.toResponse(savedPlan);
     }
 
@@ -123,6 +137,19 @@ public class TransitionPlanUseCase {
                     plan.setActualMinutes(resolveActualMinutes(plan, request.actualMinutes(), now));
                 }
         );
+
+        if (savedPlan.getActualMinutes() != null && savedPlan.getActualMinutes() > 0) {
+            sessionLogService.createAutomaticFromPlan(
+                    userId,
+                    savedPlan.getId(),
+                    savedPlan.getDirectionId(),
+                    toOffsetDateTime(savedPlan.getStartedAt()),
+                    toOffsetDateTime(savedPlan.getFinishedAt()),
+                    savedPlan.getActualMinutes(),
+                    "Plano parcialmente executado",
+                    request.description()
+            );
+        }
 
         return planMapper.toResponse(savedPlan);
     }
@@ -332,6 +359,14 @@ public class TransitionPlanUseCase {
         }
 
         return Math.toIntExact(Duration.between(plan.getStartedAt(), now).toMinutes());
+    }
+
+    private OffsetDateTime toOffsetDateTime(Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+
+        return OffsetDateTime.ofInstant(instant, APPLICATION_ZONE);
     }
 
     private void validate(boolean allowed) {

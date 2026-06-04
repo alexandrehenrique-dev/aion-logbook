@@ -9,6 +9,7 @@ import br.com.byop.aionlogbook.plan.application.GetPlanUseCase;
 import br.com.byop.aionlogbook.plan.application.ListPlansUseCase;
 import br.com.byop.aionlogbook.plan.application.TransitionPlanUseCase;
 import br.com.byop.aionlogbook.plan.application.UpdatePlanUseCase;
+import br.com.byop.aionlogbook.session.application.SessionLogService;
 import br.com.byop.aionlogbook.shared.time.TimeProvider;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -74,6 +75,9 @@ class SecurityConfigTest {
 
     @MockitoBean
     private CurrentUserService currentUserService;
+
+    @MockitoBean
+    private SessionLogService sessionLogService;
 
     @Nested
     class ApiV1 {

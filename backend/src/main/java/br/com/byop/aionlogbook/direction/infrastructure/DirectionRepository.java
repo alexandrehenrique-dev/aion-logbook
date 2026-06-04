@@ -20,4 +20,6 @@ public interface DirectionRepository extends JpaRepository<Direction, UUID> {
     Optional<Direction> findByIdAndUserProfileId(UUID id, UUID userProfileId);
 
     boolean existsByIdAndUserProfileIdAndStatus(UUID id, UUID userProfileId, DirectionStatus status);
+
+    boolean existsByIdAndUserProfileId(UUID id, UUID userProfileId);
 }

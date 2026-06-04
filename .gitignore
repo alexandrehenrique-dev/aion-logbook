@@ -39,6 +39,7 @@ coverage/
 
 # Backend / Java / Maven
 backend/target/
+backend/.mvn/timing.properties
 backend/.mvn/wrapper/maven-wrapper.jar
 backend/logs/
 backend/*.log
@@ -46,6 +47,9 @@ backend/coverage/
 backend/.jacoco/
 backend/jacoco.exec
 backend/target/site/jacoco/
+backend/test-results/
+backend/build/
+backend/out/
 
 # Java / Spring Boot
 target/
@@ -53,9 +57,12 @@ target/
 *.jar
 *.war
 *.ear
+hs_err_pid*
+replay_pid*
 target/site/jacoco/
 
 # Maven / Gradle
+.mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 .gradle/
 !gradle/wrapper/gradle-wrapper.jar
@@ -82,6 +89,9 @@ keycloak-data/
 postgres-data/
 pgdata/
 docker-data/
+backend/docker-data/
+backend/postgres-data/
+backend/keycloak-data/
 *.db
 
 # Docker overrides
@@ -92,6 +102,8 @@ coverage/
 .jacoco/
 jacoco.exec
 test-results/
+build/
+out/
 playwright-report/
 cypress/videos/
 cypress/screenshots/

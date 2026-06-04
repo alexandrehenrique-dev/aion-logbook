@@ -1,5 +1,6 @@
 package br.com.byop.aionlogbook.security;
 
+import br.com.byop.aionlogbook.dashboard.application.DashboardService;
 import br.com.byop.aionlogbook.direction.infrastructure.DirectionRepository;
 import br.com.byop.aionlogbook.identity.application.UserProfileService;
 import br.com.byop.aionlogbook.identity.domain.UserProfile;
@@ -86,6 +87,9 @@ class SecurityConfigTest {
 
     @MockitoBean
     private SessionLogService sessionLogService;
+
+    @MockitoBean
+    private DashboardService dashboardService;
 
     @Nested
     class ApiV1 {

@@ -1,9 +1,12 @@
 # Java / Maven
 target/
+.mvn/timing.properties
 *.class
 *.jar
 *.war
 *.ear
+hs_err_pid*
+replay_pid*
 .mvn/wrapper/maven-wrapper.jar
 !.mvn/wrapper/maven-wrapper.properties
 !mvnw
@@ -51,6 +54,15 @@ htmlcov/
 .jacoco/
 jacoco.exec
 target/site/jacoco/
+test-results/
+build/
+out/
+
+# Docker / local volumes
+docker-data/
+postgres-data/
+keycloak-data/
+pgdata/
 
 # Runtime
 *.pid

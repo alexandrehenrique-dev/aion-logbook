@@ -90,4 +90,50 @@ public interface PlanRepository extends JpaRepository<Plan, UUID> {
             @Param("now") Instant now,
             Pageable pageable
     );
+
+    List<Plan> findTop10ByUserIdAndStatusOrderByUpdatedAtDesc(UUID userId, PlanStatus status);
+
+    long countByUserId(UUID userId);
+
+    long countByUserIdAndStatusIn(UUID userId, Collection<PlanStatus> statuses);
+
+    @Query("""
+        select plan
+        from Plan plan
+        where plan.userId = :userId
+          and plan.plannedDate = :plannedDate
+          and plan.status = :status
+        order by plan.updatedAt desc
+        """)
+    List<Plan> findTodayByUserIdAndStatus(
+            UUID userId,
+            LocalDate plannedDate,
+            PlanStatus status
+    );
+
+    @Query("""
+        select plan
+        from Plan plan
+        where plan.userId = :userId
+          and plan.status in :statuses
+        order by plan.updatedAt desc
+        """)
+    List<Plan> findByUserIdAndStatuses(
+            UUID userId,
+            Collection<PlanStatus> statuses
+    );
+
+    @Query("""
+        select plan
+        from Plan plan
+        where plan.userId = :userId
+          and plan.plannedDate = :plannedDate
+          and plan.status in :statuses
+        order by plan.updatedAt desc
+        """)
+    List<Plan> findTodayByUserIdAndStatuses(
+            UUID userId,
+            LocalDate plannedDate,
+            Collection<PlanStatus> statuses
+    );
 }

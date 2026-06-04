@@ -22,4 +22,6 @@ public interface DirectionRepository extends JpaRepository<Direction, UUID> {
     boolean existsByIdAndUserProfileIdAndStatus(UUID id, UUID userProfileId, DirectionStatus status);
 
     boolean existsByIdAndUserProfileId(UUID id, UUID userProfileId);
+
+    long countByUserProfileIdAndStatus(UUID userProfileId, DirectionStatus status);
 }

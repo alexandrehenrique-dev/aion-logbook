@@ -1,9 +1,6 @@
 # Aion Logbook Backend
 
-Backend do Aion Logbook, responsavel pela API HTTP privada da aplicacao.
-Ele concentra autenticacao via JWT, ownership dos recursos por usuario,
-persistencia em PostgreSQL, migrations versionadas e automacoes de status dos
-planos.
+Backend do Aion Logbook, responsavel pela API HTTP privada da aplicacao. O servico centraliza autenticacao JWT, ownership dos recursos por usuario, persistencia em PostgreSQL, migrations Flyway, automacoes de status de planos, registro de sessoes e agregacoes do dashboard.
 
 ## Stack Principal
 
@@ -14,51 +11,41 @@ planos.
 - Spring Data JPA
 - PostgreSQL
 - Flyway
+- Springdoc OpenAPI
 - Maven
+- Testcontainers
 
-## Profiles Disponiveis
+## Requisitos Locais
 
-- `default`: profile base para ambientes reais. Usa variaveis de ambiente para
-  datasource, issuer JWT, CORS e demais configuracoes operacionais.
-- `local`: profile de desenvolvimento local. Deve ser criado a partir de
-  `src/main/resources/application-local.example.yml`, que usa valores locais nao
-  sensiveis para banco, Keycloak, Swagger e scheduler.
-- `test`: usado pela suite automatizada via `src/test/resources/application-test.yml`.
+- JDK 21
+- Maven 3.9+ ou Maven Wrapper, quando disponivel no checkout
+- Docker e Docker Compose para PostgreSQL e Keycloak locais
+- Porta `8080` livre para a API
+- Portas `5433` e `8181` livres para os servicos locais padrao
 
-## Estrutura
+## Dependencias Locais
 
-Base package:
+O Docker Compose fica na raiz versionada do projeto, um nivel acima deste diretorio:
 
-```txt
-br.com.byop.aionlogbook
+```bash
+cd ..
+docker compose up -d
 ```
 
-Modulos principais atuais:
+Servicos locais:
 
-```txt
-br.com.byop.aionlogbook
-├── config
-├── direction
-│   ├── api
-│   ├── application
-│   ├── domain
-│   ├── dto
-│   ├── infrastructure
-│   └── mapper
-├── identity
-├── plan
-├── security
-├── session
-└── shared
-```
+- PostgreSQL: `localhost:5433`, database `aion_logbook`
+- Keycloak: `http://localhost:8181`
 
-A API versionada fica sob `/api/v1/**`.
+O realm local do Keycloak e importado de `docker/keycloak/import/aion-logbook-realm.json`.
 
 ## Configuracao
 
-O `application.yml` versionado e o profile default do backend. Ele nao contem
-credenciais reais nem URLs privadas; ambientes reais devem fornecer os valores
-por variaveis de ambiente.
+O `src/main/resources/application.yml` usa variaveis de ambiente e nao deve receber credenciais reais. Para desenvolvimento local, crie um arquivo nao versionado a partir do exemplo:
+
+```bash
+cp src/main/resources/application-local.example.yml src/main/resources/application-local.yml
+```
 
 Variaveis principais:
 
@@ -67,29 +54,27 @@ Variaveis principais:
 | `DB_URL` | URL JDBC do PostgreSQL |
 | `DB_USERNAME` | Usuario do banco |
 | `DB_PASSWORD` | Senha do banco |
-| `KEYCLOAK_ISSUER_URI` | Issuer URI do Keycloak/provedor JWT |
+| `KEYCLOAK_ISSUER_URI` | Issuer URI do provedor JWT |
 | `CORS_ALLOWED_ORIGINS` | Origens permitidas para CORS |
 | `SERVER_PORT` | Porta HTTP da aplicacao; padrao `8080` |
-| `SERVER_CONTEXT_PATH` | Context path da aplicacao; padrao `/` |
-| `FLYWAY_ENABLED` | Habilita/desabilita migrations Flyway; padrao `true` |
-| `SWAGGER_ENABLED` | Habilita/desabilita Swagger/OpenAPI; padrao `false` |
-| `AION_SECURITY_ENABLED` | Habilita/desabilita seguranca da API; padrao `true` |
-| `AION_SCHEDULER_DUE_FIXED_DELAY` | Intervalo em ms do job DUE; padrao `60000` |
-| `AION_SCHEDULER_MISSED_FIXED_DELAY` | Intervalo em ms do job MISSED; padrao `300000` |
-| `ACTUATOR_HEALTH_SHOW_DETAILS` | Exibicao de detalhes no healthcheck; padrao `never` |
+| `FLYWAY_ENABLED` | Habilita migrations Flyway; padrao `true` |
+| `SWAGGER_ENABLED` | Habilita Swagger/OpenAPI; padrao `false` |
+| `AION_SECURITY_ENABLED` | Habilita seguranca da API; padrao `true` |
+| `AION_SCHEDULER_DUE_FIXED_DELAY` | Intervalo do job DUE em ms |
+| `AION_SCHEDULER_MISSED_FIXED_DELAY` | Intervalo do job MISSED em ms |
 
-Para desenvolvimento local, crie um arquivo nao versionado a partir do exemplo:
-
-```bash
-cp src/main/resources/application-local.example.yml src/main/resources/application-local.yml
-```
-
-## Rodar Localmente
+## Rodar a Aplicacao
 
 A partir de `backend/`:
 
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+Se o Maven Wrapper estiver disponivel:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
 Healthcheck:
@@ -100,51 +85,105 @@ curl -i http://localhost:8080/actuator/health
 
 ## Testes
 
-Execute a suite automatizada a partir de `backend/`:
+A partir de `backend/`:
 
 ```bash
 mvn test
 ```
 
-Se o Maven Wrapper for adicionado ao checkout em uma etapa futura, o comando
-equivalente sera `./mvnw test`.
+Build completo recomendado antes de publicar alteracoes:
+
+```bash
+mvn clean verify
+```
+
+Quando o Maven Wrapper estiver disponivel, use `./mvnw test` e `./mvnw clean verify`.
 
 ## Migrations
 
-As migrations ficam em:
+As migrations Flyway ficam em:
 
 ```txt
 src/main/resources/db/migration
 ```
 
-O Flyway executa automaticamente na subida da aplicacao quando `spring.flyway.enabled=true`.
+Com `spring.flyway.enabled=true`, o Flyway executa automaticamente na subida da aplicacao. Para aplicar migrations localmente, suba o PostgreSQL via Docker Compose e inicie a API com o profile `local`.
 
-Para aplicar migrations localmente, suba o banco configurado e inicie a aplicacao com o perfil `local`:
+## Swagger / OpenAPI
 
-```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=local
+O Swagger fica desabilitado por padrao fora de ambientes controlados. No profile local, com `SWAGGER_ENABLED=true`, acesse:
+
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+
+## Estrutura
+
+Base package:
+
+```txt
+br.com.byop.aionlogbook
 ```
 
-Em ambientes reais, configure `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` e mantenha
-`FLYWAY_ENABLED=true` para aplicar as migrations versionadas na subida.
+Camadas e pacotes principais:
+
+- `config`: CORS, OpenAPI e configuracoes de suporte.
+- `security`: Resource Server JWT, usuario autenticado e resolucao do `userId`.
+- `identity`: `UserProfile` interno associado ao subject do Keycloak.
+- `direction`: controller, service, DTOs, mapper, repository e entidade `Direction`.
+- `plan`: controllers, use cases, DTOs, mapper, repositories, entidades e politicas de transicao.
+- `session`: controller, service, DTOs, mapper, repository e entidade `SessionLog`.
+- `dashboard`: controller, service e DTOs/projections de agregacao.
+- `scheduler`: jobs de atualizacao automatica de status dos planos.
+- `shared`: erros, paginacao, logging, tempo e wrappers comuns.
+
+A API versionada fica sob `/api/v1/**`.
+
+## Dominios
+
+### Identity / UserProfile
+
+Mantem o perfil interno do usuario autenticado. O `userId` usado nos demais dominios e sempre derivado do JWT/contexto autenticado; ele nao deve ser aceito no payload das APIs privadas.
+
+### Directions
+
+`Direction` representa uma direcao do usuario. A entidade pertence a `UserProfile` por `user_profile_id`, nao por uma coluna direta `userId`. Queries por usuario devem usar `userProfile.id` ou derived queries com `UserProfileId`.
+
+Status atuais:
+
+- `ACTIVE`
+- `ARCHIVED`
+
+### Plans
+
+`Plan` representa uma unidade planejada de trabalho, opcionalmente vinculada a uma direcao ativa do mesmo usuario. Criacao, listagem, busca, atualizacao, eventos e transicoes filtram por `userId`.
+
+Status atuais: `DRAFT`, `SCHEDULED`, `PENDING`, `DUE`, `IN_PROGRESS`, `COMPLETED`, `PARTIAL`, `POSTPONED`, `IGNORED`, `CANCELED`, `MISSED`.
+
+### Sessions
+
+`SessionLog` registra sessoes realizadas pelo usuario autenticado, manualmente ou a partir de transicoes de planos. `planId` e `directionId`, quando informados, precisam pertencer ao usuario. Nao ha endpoint `DELETE` para sessoes no MVP.
+
+### Dashboard
+
+O dashboard e uma camada de leitura agregada. Ele nao e entidade persistida, nao possui tabela propria e apenas consolida dados ja existentes de planos, direcoes e sessoes.
 
 ## Endpoints Principais
 
-Todos os endpoints abaixo ficam sob a API privada versionada:
+Todos os endpoints privados exigem JWT Bearer valido quando `AION_SECURITY_ENABLED=true`.
 
 | Metodo | Endpoint | Descricao |
 |---|---|---|
 | `GET` | `/api/v1/me` | Retorna/cria o perfil interno do usuario autenticado |
-| `GET` | `/api/v1/directions` | Lista direcoes do usuario autenticado; por padrao retorna `ACTIVE` |
-| `POST` | `/api/v1/directions` | Cria uma direcao com status `ACTIVE` |
+| `GET` | `/api/v1/directions` | Lista direcoes do usuario autenticado |
+| `POST` | `/api/v1/directions` | Cria uma direcao |
 | `GET` | `/api/v1/directions/{id}` | Busca uma direcao do usuario autenticado |
 | `PUT` | `/api/v1/directions/{id}` | Atualiza uma direcao do usuario autenticado |
-| `DELETE` | `/api/v1/directions/{id}` | Arquiva logicamente uma direcao do usuario autenticado |
+| `DELETE` | `/api/v1/directions/{id}` | Arquiva logicamente uma direcao |
 | `GET` | `/api/v1/plans` | Lista planos do usuario autenticado com filtros opcionais |
-| `POST` | `/api/v1/plans` | Cria um plano e registra evento de criacao |
+| `POST` | `/api/v1/plans` | Cria um plano |
 | `GET` | `/api/v1/plans/{id}` | Busca um plano do usuario autenticado |
-| `PUT` | `/api/v1/plans/{id}` | Atualiza um plano e registra evento de atualizacao |
-| `GET` | `/api/v1/plans/{id}/events` | Lista eventos do plano do usuario autenticado |
+| `PUT` | `/api/v1/plans/{id}` | Atualiza um plano |
+| `GET` | `/api/v1/plans/{id}/events` | Lista eventos do plano |
 | `POST` | `/api/v1/plans/{id}/start` | Inicia um plano permitido |
 | `POST` | `/api/v1/plans/{id}/complete` | Conclui um plano em andamento |
 | `POST` | `/api/v1/plans/{id}/partial` | Finaliza parcialmente um plano |
@@ -152,168 +191,67 @@ Todos os endpoints abaixo ficam sob a API privada versionada:
 | `POST` | `/api/v1/plans/{id}/ignore` | Ignora um plano permitido |
 | `POST` | `/api/v1/plans/{id}/cancel` | Cancela um plano nao terminal |
 | `POST` | `/api/v1/plans/{id}/modify` | Modifica campos operacionais de um plano nao terminal |
-| `GET` | `/api/v1/sessions` | Lista sessoes do usuario autenticado com filtros opcionais |
+| `GET` | `/api/v1/sessions` | Lista sessoes do usuario autenticado |
 | `POST` | `/api/v1/sessions` | Cria uma sessao manual |
 | `GET` | `/api/v1/sessions/{id}` | Busca uma sessao do usuario autenticado |
 | `PUT` | `/api/v1/sessions/{id}` | Atualiza uma sessao do usuario autenticado |
+| `GET` | `/api/v1/dashboard/today` | Retorna a visao diaria agregada do usuario autenticado |
+| `GET` | `/api/v1/dashboard/summary` | Retorna o resumo geral agregado do usuario autenticado |
+
+## ETAPA 10 - Dashboard Minimo
+
+Endpoints implementados:
+
+- `GET /api/v1/dashboard/today`
+- `GET /api/v1/dashboard/summary`
+
+Regras de seguranca:
+
+- Ambos os endpoints sao protegidos por JWT.
+- O `userId` vem sempre do usuario autenticado via `CurrentUserService`.
+- Nenhum endpoint recebe `userId` por parametro.
+- Todas as queries filtram por usuario.
+- Joins de sessoes com planos e direcoes tambem restringem o ownership do usuario autenticado.
+- `Direction` e filtrada por `direction.userProfile.id`, pois nao possui coluna direta `userId`.
+
+Agregacoes de `/today`:
+
+- Data atual no timezone padrao.
+- Saudacao baseada no horario local.
+- Planos em andamento.
+- Planos do dia em `DUE`, `MISSED`, `COMPLETED`, `PARTIAL` e `PENDING`.
+- Tempo total de sessoes do dia em minutos.
+- Taxa de conclusao do dia.
+- Quantidade de direcoes ativas.
+- Ultimas sessoes, enriquecidas com `planTitle` e `directionName`.
+- `lastLogEntries` retorna lista vazia enquanto o dominio Logbook ainda nao existir.
+
+Agregacoes de `/summary`:
+
+- Tempo total registrado em sessoes.
+- Taxa geral de conclusao de planos.
+- Total de planos criados.
+- Total de planos concluidos ou parcialmente concluidos.
+- Quantidade de direcoes ativas.
+- Tempo registrado na semana atual.
+- `streak` retorna `0` enquanto a regra dedicada ainda nao existir.
+- Ultima atividade registrada em sessoes.
+
+Timezone:
+
+- O timezone padrao usado pelo dashboard e `America/Sao_Paulo`.
+- Essa escolha e fixa enquanto `UserProfile` ainda nao possuir timezone persistido.
+
+Persistencia:
+
+- Dashboard nao e entidade persistida.
+- Nao existe tabela, migration ou repository proprio de dashboard.
+- A camada apenas agrega dados existentes de `Plan`, `Direction` e `SessionLog`.
 
 ## Seguranca
 
 - Endpoints `/api/v1/**` exigem JWT Bearer valido.
-- O backend atua como OAuth2 Resource Server e valida tokens JWT.
-- O usuario autenticado e resolvido a partir do JWT pelo fluxo de `AuthenticatedUserProvider` e `UserProfileService`.
-- `userId` nao deve ser enviado no request.
+- O backend atua como OAuth2 Resource Server.
 - Ownership e sempre derivado do usuario autenticado.
-- Recursos de outro usuario devem ser tratados como inexistentes e retornar `404`.
-
-## Dominio Direction
-
-`Direction` representa uma direcao de vida/trabalho cadastrada pelo usuario autenticado.
-
-Status atuais:
-
-- `ACTIVE`: direcao ativa, usada na listagem padrao.
-- `ARCHIVED`: direcao arquivada por delete logico.
-
-Regras principais:
-
-- A criacao sempre usa `status = ACTIVE`.
-- Buscas e alteracoes usam sempre `id + userProfileId`.
-- `DELETE` nao remove fisicamente o registro.
-- O arquivamento define `status = ARCHIVED`, `archivedAt = now` e atualiza `updatedAt`.
-
-## Dominio Plan
-
-`Plan` representa um plano operacional do usuario autenticado, opcionalmente vinculado a uma direcao ativa.
-
-Status atuais:
-
-- `DRAFT`
-- `SCHEDULED`
-- `PENDING`
-- `DUE`
-- `IN_PROGRESS`
-- `COMPLETED`
-- `PARTIAL`
-- `POSTPONED`
-- `IGNORED`
-- `CANCELED`
-- `MISSED`
-
-Regras principais:
-
-- A criacao sempre deriva o ownership do usuario autenticado.
-- `directionId`, quando informado, precisa pertencer ao usuario e estar ativo.
-- A listagem permite filtros opcionais por `status`, `directionId` e `plannedDate`.
-- Criacoes e atualizacoes registram eventos em `plan_events`.
-
-## Scheduler DUE/MISSED
-
-O backend possui jobs agendados responsaveis por atualizar automaticamente o
-estado dos planos:
-
-- DUE: planos `SCHEDULED` ou `PENDING` viram `DUE` quando `plannedStartAt <= now`.
-- MISSED: planos `DUE` viram `MISSED` quando `plannedEndAt < now`.
-- Planos `IN_PROGRESS` nunca viram `MISSED` automaticamente.
-- Eventos `DUE` e `MISSED` sao criados de forma idempotente.
-- Os jobs usam `Clock` injetavel e executam dentro de transacao.
-
-Os intervalos sao configurados por `AION_SCHEDULER_DUE_FIXED_DELAY` e
-`AION_SCHEDULER_MISSED_FIXED_DELAY`. A migracao
-`V009__scheduler_plan_events_unique.sql` adiciona uma restricao unica parcial
-para evitar eventos duplicados de scheduler por plano. O projeto ainda nao usa
-ShedLock; a idempotencia fica concentrada no banco e na camada de aplicacao.
-
-## Dominio SessionLog
-
-`SessionLog` registra sessoes realizadas pelo usuario autenticado, criadas manualmente ou de forma automatica a partir de transicoes de planos.
-
-Endpoints disponiveis:
-
-| Metodo | Endpoint | Descricao |
-|---|---|---|
-| `GET` | `/api/v1/sessions` | Lista sessoes do usuario autenticado |
-| `POST` | `/api/v1/sessions` | Cria uma sessao manual |
-| `GET` | `/api/v1/sessions/{id}` | Busca uma sessao por ID |
-| `PUT` | `/api/v1/sessions/{id}` | Atualiza uma sessao |
-
-Filtros suportados na listagem:
-
-- `directionId`
-- `planId`
-- `dateFrom`
-- `dateTo`
-- `page`
-- `size`
-- `sort`
-
-Regras principais:
-
-- `userId` vem sempre do JWT/contexto autenticado.
-- `planId` e `directionId`, quando informados, devem pertencer ao usuario.
-- Recurso inexistente ou pertencente a outro usuario retorna `404`.
-- Nao ha endpoint `DELETE` para sessoes no MVP.
-- A transicao `complete` de um plano `IN_PROGRESS` cria uma sessao automatica.
-- A transicao `partial` cria uma sessao automatica quando houver duracao.
-- `durationMinutes` usa `actualMinutes` quando informado; caso contrario, calcula a diferenca entre `startedAt` e `finishedAt`.
-
-Exemplo de payload para criacao manual:
-
-```json
-{
-  "planId": "00000000-0000-0000-0000-000000000000",
-  "directionId": "00000000-0000-0000-0000-000000000000",
-  "startedAt": "2026-06-03T20:00:00-03:00",
-  "finishedAt": "2026-06-03T20:45:00-03:00",
-  "actualMinutes": 45,
-  "result": "Sessão concluída",
-  "notes": "Notas livres da sessão"
-}
-```
-
-## ETAPA 7 - Transicoes de Plan
-
-A Etapa 7 implementa as transicoes operacionais de `Plan` no backend. Cada transicao busca o recurso por `id + userId`, persiste o novo estado no plano e registra um evento em `plan_events` via `PlanEventRepository`.
-
-Endpoints de transicao:
-
-| Metodo | Endpoint | Evento |
-|---|---|---|
-| `POST` | `/api/v1/plans/{id}/start` | `STARTED` |
-| `POST` | `/api/v1/plans/{id}/complete` | `COMPLETED` |
-| `POST` | `/api/v1/plans/{id}/partial` | `PARTIAL_COMPLETED` |
-| `POST` | `/api/v1/plans/{id}/postpone` | `POSTPONED` |
-| `POST` | `/api/v1/plans/{id}/ignore` | `IGNORED` |
-| `POST` | `/api/v1/plans/{id}/cancel` | `CANCELED` |
-| `POST` | `/api/v1/plans/{id}/modify` | `MODIFIED` |
-
-Transicoes permitidas:
-
-| Acao | Origem permitida | Destino |
-|---|---|---|
-| `start` | `SCHEDULED`, `PENDING`, `DUE`, `MISSED`, `POSTPONED` | `IN_PROGRESS` |
-| `complete` | `IN_PROGRESS` | `COMPLETED` |
-| `partial` | `IN_PROGRESS`, `DUE`, `PENDING`, `MISSED` | `PARTIAL` |
-| `postpone` | `SCHEDULED`, `PENDING`, `DUE`, `MISSED`, `POSTPONED` | `POSTPONED` |
-| `ignore` | `SCHEDULED`, `PENDING`, `DUE`, `MISSED` | `IGNORED` |
-| `cancel` | Qualquer estado nao terminal | `CANCELED` |
-| `modify` | Qualquer estado nao terminal | Mantem o estado atual |
-
-Estados terminais nao transicionam: `COMPLETED`, `PARTIAL`, `IGNORED` e `CANCELED`.
-
-Regras e erros esperados:
-
-- Apenas um plano pode ficar `IN_PROGRESS` por usuario; iniciar outro plano em andamento retorna `409 CONFLICT`.
-- Plano inexistente ou pertencente a outro usuario retorna `404 RESOURCE_NOT_FOUND`.
-- Transicao invalida retorna `400 INVALID_TRANSITION`.
-- `start` atualiza `startedAt`; `complete` e `partial` atualizam `finishedAt`; `actualMinutes` e atualizado quando aplicavel.
-- `complete` cria `SessionLog` automatico; `partial` cria `SessionLog` automatico quando houver duracao.
-- `lastStatusChangedAt` e atualizado em toda transicao desta etapa.
-
-## Observacoes de Seguranca
-
-- Nao versionar `application-local.yml`, `.env`, tokens, senhas ou URLs privadas.
-- O profile default deve receber configuracoes por variaveis de ambiente.
-- Endpoints privados dependem de JWT Bearer valido quando `AION_SECURITY_ENABLED=true`.
-- `CORS_ALLOWED_ORIGINS` deve listar apenas origens confiaveis em ambientes reais.
-- Swagger deve permanecer desabilitado por padrao fora de ambientes controlados.
+- Recursos de outro usuario devem ser tratados como inexistentes e retornar `404` quando aplicavel.
+- Nao versionar `application-local.yml`, `.env`, tokens, senhas, dumps locais ou volumes Docker.

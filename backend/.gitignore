@@ -39,6 +39,9 @@ Thumbs.db
 application-local.yml
 application-local.yaml
 application-local.properties
+src/main/resources/application-local.yml
+src/main/resources/application-local.yaml
+src/main/resources/application-local.properties
 !application-local.example.yml
 !application-local.example.yaml
 !application-local.example.properties
@@ -58,6 +61,8 @@ htmlcov/
 .jacoco/
 jacoco.exec
 target/site/jacoco/
+surefire-reports/
+failsafe-reports/
 test-results/
 build/
 out/
@@ -78,5 +83,8 @@ pgdata/
 tmp/
 temp/
 *.tmp
+*.dump
+*.sql.dump
+*.hprof
 *.swp
 *.swo

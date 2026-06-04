@@ -1,11 +1,12 @@
 # Aion Logbook Backend
 
-Backend do Aion Logbook, responsavel pela API HTTP privada da aplicacao. O servico centraliza autenticacao JWT, ownership dos recursos por usuario, persistencia em PostgreSQL, migrations Flyway, automacoes de status de planos, registro de sessoes e agregacoes do dashboard.
+Backend do Aion Logbook, responsavel por autenticacao via Keycloak/JWT, persistencia de dados pessoais do usuario, direcoes, planos, sessoes, bug reports e entradas de logbook. A API centraliza ownership dos recursos por usuario autenticado, migrations Flyway, automacoes de status de planos, registro de sessoes e agregacoes do dashboard.
 
 ## Stack Principal
 
 - Java 21
 - Spring Boot 3.4.5
+- Spring Web
 - Spring Security
 - OAuth2 Resource Server / JWT
 - Spring Data JPA
@@ -14,6 +15,8 @@ Backend do Aion Logbook, responsavel pela API HTTP privada da aplicacao. O servi
 - Springdoc OpenAPI
 - Maven
 - Testcontainers
+- JUnit 5
+- Mockito
 
 ## Requisitos Locais
 
@@ -65,6 +68,8 @@ Variaveis principais:
 | `TELEGRAM_CHAT_ID` | Chat, grupo ou canal que recebe os BugReports |
 | `AION_SCHEDULER_DUE_FIXED_DELAY` | Intervalo do job DUE em ms |
 | `AION_SCHEDULER_MISSED_FIXED_DELAY` | Intervalo do job MISSED em ms |
+
+Valores locais e secrets devem ficar apenas em arquivos ignorados pelo Git, como `src/main/resources/application-local.yml` ou `.env`. Nao versionar credenciais reais, tokens, dumps, logs ou sobrescritas locais de IDE.
 
 ## Rodar a Aplicacao
 
@@ -195,6 +200,42 @@ O Telegram e opcional e configurado por `TELEGRAM_ENABLED`, `TELEGRAM_BOT_TOKEN`
 
 Documentacao completa: [docs/telegram-bug-report.md](docs/telegram-bug-report.md).
 
+### Logbook / LogEntry
+
+`LogEntry` registra anotacoes pessoais do usuario autenticado em `/api/v1/logs`. O modulo permite CRUD de registros pessoais, com hard delete permitido no MVP.
+
+Regras principais:
+
+- `title` obrigatorio, com maximo de 200 caracteres.
+- `content` obrigatorio, com maximo de 10000 caracteres.
+- `type` obrigatorio.
+- `tags` opcionais, persistidas como JSONB.
+- Filtros opcionais por tipo, direcao, plano, tags, periodo e busca textual.
+- Ownership sempre por usuario autenticado.
+- Recursos de outro usuario retornam `404`.
+- `userId` vem do JWT via `CurrentUserService`, nunca do payload.
+- `directionId` e `planId`, quando informados, precisam pertencer ao usuario autenticado.
+
+Endpoints:
+
+| Metodo | Endpoint | Descricao |
+|---|---|---|
+| `GET` | `/api/v1/logs` | Lista entradas do logbook com filtros opcionais |
+| `POST` | `/api/v1/logs` | Cria uma entrada do logbook |
+| `GET` | `/api/v1/logs/{id}` | Busca uma entrada do usuario autenticado |
+| `PUT` | `/api/v1/logs/{id}` | Atualiza uma entrada do usuario autenticado |
+| `DELETE` | `/api/v1/logs/{id}` | Remove definitivamente uma entrada pessoal no MVP |
+
+## Keycloak / JWT
+
+Todos os endpoints privados sob `/api/v1/**` exigem Bearer JWT valido quando `AION_SECURITY_ENABLED=true`. O issuer e configurado por `KEYCLOAK_ISSUER_URI`; no ambiente local esperado, ele aponta para o realm do Keycloak em `http://localhost:8181/realms/aion-logbook`.
+
+O backend le claims como `sub`, `email`, `preferred_username` e `name` para resolver/criar o `UserProfile`. O identificador interno usado nos dominios e obtido por `CurrentUserService` a partir do JWT/contexto autenticado.
+
+## LGPD
+
+O Logbook armazena dados pessoais e conteudo livre informado pelo usuario. Logs tecnicos nao devem conter o conteudo integral de `LogEntry.content`; quando necessario para troubleshooting, registrar apenas identificadores, metadados nao sensiveis e mensagens sanitizadas. Secrets, tokens, dados locais e dumps de banco nao devem ser versionados.
+
 ## Endpoints Principais
 
 Todos os endpoints privados exigem JWT Bearer valido quando `AION_SECURITY_ENABLED=true`.
@@ -226,6 +267,11 @@ Todos os endpoints privados exigem JWT Bearer valido quando `AION_SECURITY_ENABL
 | `GET` | `/api/v1/dashboard/today` | Retorna a visao diaria agregada do usuario autenticado |
 | `GET` | `/api/v1/dashboard/summary` | Retorna o resumo geral agregado do usuario autenticado |
 | `POST` | `/api/v1/bug-reports` | Registra um bug report do usuario autenticado |
+| `GET` | `/api/v1/logs` | Lista entradas de logbook do usuario autenticado |
+| `POST` | `/api/v1/logs` | Cria uma entrada de logbook |
+| `GET` | `/api/v1/logs/{id}` | Busca uma entrada de logbook do usuario autenticado |
+| `PUT` | `/api/v1/logs/{id}` | Atualiza uma entrada de logbook do usuario autenticado |
+| `DELETE` | `/api/v1/logs/{id}` | Remove uma entrada pessoal de logbook |
 | `GET` | `/api/v1/onboarding/status` | Retorna status do onboarding e sugestoes padrao de direcoes |
 | `POST` | `/api/v1/onboarding/complete` | Marca o onboarding do usuario autenticado como concluido |
 | `POST` | `/api/v1/onboarding/directions` | Cria direcoes em lote a partir do onboarding |

@@ -5,6 +5,7 @@ import br.com.byop.aionlogbook.dashboard.application.DashboardService;
 import br.com.byop.aionlogbook.direction.infrastructure.DirectionRepository;
 import br.com.byop.aionlogbook.identity.application.UserProfileService;
 import br.com.byop.aionlogbook.identity.domain.UserProfile;
+import br.com.byop.aionlogbook.logbook.application.LogEntryService;
 import br.com.byop.aionlogbook.onboarding.application.OnboardingService;
 import br.com.byop.aionlogbook.plan.application.CreatePlanUseCase;
 import br.com.byop.aionlogbook.plan.application.GetPlanEventsUseCase;
@@ -102,6 +103,9 @@ class SecurityConfigTest {
 
     @MockitoBean
     private SettingsService settingsService;
+
+    @MockitoBean
+    private LogEntryService logEntryService;
 
     @Nested
     class ApiV1 {

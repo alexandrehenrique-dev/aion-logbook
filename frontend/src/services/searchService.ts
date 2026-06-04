@@ -25,15 +25,15 @@ export const searchService = {
     if (!query.trim()) return [];
 
     const [plans, directions, logs] = await Promise.allSettled([
-      planService.list(),
+      planService.list({ size: 200 }),
       directionService.list(),
-      logbookService.list(),
+      logbookService.list({ size: 200 }),
     ]);
 
     const results: SearchResult[] = [];
 
     if (plans.status === 'fulfilled') {
-      for (const p of plans.value) {
+      for (const p of plans.value.data) {
         if (matches(p.title, query) || (p.description && matches(p.description, query))) {
           results.push({ id: p.id, type: 'plan', title: p.title, subtitle: p.status, path: `/plans/${p.id}` });
         }
@@ -49,7 +49,7 @@ export const searchService = {
     }
 
     if (logs.status === 'fulfilled') {
-      for (const l of logs.value) {
+      for (const l of logs.value.data) {
         if (matches(l.title, query) || (l.content && matches(l.content, query))) {
           results.push({ id: l.id, type: 'log', title: l.title, subtitle: l.type, path: `/logbook` });
         }

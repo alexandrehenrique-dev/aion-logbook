@@ -123,7 +123,6 @@ export function PlanDetail() {
         plannedDate: modDate || undefined,
         plannedStartAt: modDate && modTime ? `${modDate}T${modTime}:00Z` : undefined,
         estimatedMinutes: modMinutes ? Number(modMinutes) : undefined,
-        reason: modReason || undefined,
       });
       closeModal();
       await reload();
@@ -146,7 +145,7 @@ export function PlanDetail() {
           break;
         case 'complete':
           await planService.complete(id, {
-            notes: notes || undefined,
+            description: notes || undefined,
             actualMinutes: actualMinutes ? Number(actualMinutes) : undefined,
           });
           break;
@@ -154,12 +153,12 @@ export function PlanDetail() {
           await planService.partial(id, {
             reason: reason || undefined,
             actualMinutes: actualMinutes ? Number(actualMinutes) : undefined,
-            notes: notes || undefined,
+            description: notes || undefined,
           });
           break;
         case 'postpone':
           await planService.postpone(id, {
-            newPlannedStartAt: `${newDate}T${newTime || '09:00'}:00Z`,
+            plannedStartAt: `${newDate}T${newTime || '09:00'}:00Z`,
             reason: reason || undefined,
           });
           break;

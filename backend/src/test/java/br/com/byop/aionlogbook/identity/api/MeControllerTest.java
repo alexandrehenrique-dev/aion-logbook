@@ -34,6 +34,7 @@ class MeControllerTest {
             assertThat(response.email()).isEqualTo("loki@byop.com");
             assertThat(response.username()).isEqualTo("loki");
             assertThat(response.fullName()).isEqualTo("Loki");
+            assertThat(response.onboardingCompleted()).isFalse();
             assertThat(response.createdAt()).isEqualTo(profile.getCreatedAt());
             assertThat(response.updatedAt()).isEqualTo(profile.getUpdatedAt());
 

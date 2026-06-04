@@ -63,6 +63,16 @@ public interface SessionLogRepository extends JpaRepository<SessionLog, UUID> {
         """)
     Integer sumTotalDurationMinutesByUserId(UUID userId);
 
+    long countByUserIdAndDirectionId(UUID userId, UUID directionId);
+
+    @Query("""
+        select coalesce(sum(session.durationMinutes), 0)
+        from SessionLog session
+        where session.userId = :userId
+          and session.directionId = :directionId
+        """)
+    Integer sumDurationMinutesByUserIdAndDirectionId(UUID userId, UUID directionId);
+
     @Query("""
         select
             session.id as id,

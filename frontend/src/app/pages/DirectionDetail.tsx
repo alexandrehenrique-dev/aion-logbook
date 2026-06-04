@@ -39,14 +39,15 @@ export function DirectionDetail() {
         setSummary(data);
       } catch {
         // Fallback: compose summary from direction + plans
-        const [direction, allPlans] = await Promise.all([
+        const [direction, plansPage] = await Promise.all([
           directionService.getById(id),
-          planService.list({ directionId: id }),
+          planService.list({ directionId: id, size: 200 }),
         ]);
+        const allPlans = plansPage.data;
         const completed = allPlans.filter((p) => p.status === 'COMPLETED' || p.status === 'PARTIAL');
         setSummary({
           direction,
-          totalPlans: allPlans.length,
+          totalPlans: plansPage.total,
           plansCompleted: completed.length,
           completionRate: allPlans.length > 0 ? Math.round((completed.length / allPlans.length) * 100) : 0,
           totalMinutes: 0,

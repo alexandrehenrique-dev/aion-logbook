@@ -1,7 +1,6 @@
 package br.com.byop.aionlogbook.security;
 
-import br.com.byop.aionlogbook.identity.infrastructure.UserProfileRepository;
-import jakarta.persistence.EntityNotFoundException;
+import br.com.byop.aionlogbook.identity.application.UserProfileService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,24 +9,14 @@ import java.util.UUID;
 @Service
 public class CurrentUserService {
 
-    private final AuthenticatedUserProvider authenticatedUserProvider;
-    private final UserProfileRepository userProfileRepository;
+    private final UserProfileService userProfileService;
 
-    public CurrentUserService(
-            AuthenticatedUserProvider authenticatedUserProvider,
-            UserProfileRepository userProfileRepository
-    ) {
-        this.authenticatedUserProvider = authenticatedUserProvider;
-        this.userProfileRepository = userProfileRepository;
+    public CurrentUserService(UserProfileService userProfileService) {
+        this.userProfileService = userProfileService;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UUID currentUserId() {
-        var authenticatedUser = authenticatedUserProvider.getCurrentUser();
-
-        return userProfileRepository
-                .findByKeycloakSubject(authenticatedUser.keycloakSubject())
-                .orElseThrow(() -> new EntityNotFoundException("User profile not found"))
-                .getId();
+        return userProfileService.getOrCreateCurrentUserProfile().getId();
     }
 }

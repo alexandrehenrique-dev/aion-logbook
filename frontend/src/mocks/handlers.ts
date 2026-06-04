@@ -227,7 +227,15 @@ let logs: LogEntry[] = [
 
 let bugReports: Array<{ id: string; title: string; severity: string; createdAt: string }> = [];
 
-let onboardingCompleted = false;
+const ONBOARDING_STORAGE_KEY = 'aion:mock:onboarding-completed';
+
+function getOnboardingCompleted(): boolean {
+  return sessionStorage.getItem(ONBOARDING_STORAGE_KEY) === 'true';
+}
+
+function setOnboardingCompleted(value: boolean): void {
+  sessionStorage.setItem(ONBOARDING_STORAGE_KEY, String(value));
+}
 
 let userSettings: UserSettings = {
   timezone: 'America/Sao_Paulo',
@@ -332,10 +340,10 @@ export const handlers = [
   }),
 
   // User profile
-  http.get('/api/v1/me', () => HttpResponse.json({ ...MOCK_USER, onboardingCompleted })),
+  http.get('/api/v1/me', () => HttpResponse.json({ ...MOCK_USER, onboardingCompleted: getOnboardingCompleted() })),
 
   // Onboarding
-  http.get('/api/v1/onboarding/status', () => HttpResponse.json({ completed: onboardingCompleted })),
+  http.get('/api/v1/onboarding/status', () => HttpResponse.json({ completed: getOnboardingCompleted() })),
   http.post('/api/v1/onboarding/directions', async ({ request }) => {
     const body = (await request.json()) as { directions: Partial<Direction>[] };
     const newDirs: Direction[] = (body.directions ?? []).map((d, i) => ({
@@ -354,7 +362,7 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
   http.post('/api/v1/onboarding/complete', async () => {
-    onboardingCompleted = true;
+    setOnboardingCompleted(true);
     return new HttpResponse(null, { status: 204 });
   }),
 

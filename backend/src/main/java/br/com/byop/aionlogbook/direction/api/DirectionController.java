@@ -1,9 +1,11 @@
 package br.com.byop.aionlogbook.direction.api;
 
 import br.com.byop.aionlogbook.direction.application.DirectionService;
+import br.com.byop.aionlogbook.direction.application.DirectionSummaryService;
 import br.com.byop.aionlogbook.direction.domain.DirectionStatus;
 import br.com.byop.aionlogbook.direction.dto.CreateDirectionRequest;
 import br.com.byop.aionlogbook.direction.dto.DirectionResponse;
+import br.com.byop.aionlogbook.direction.dto.DirectionSummaryResponse;
 import br.com.byop.aionlogbook.direction.dto.UpdateDirectionRequest;
 import br.com.byop.aionlogbook.direction.mapper.DirectionMapper;
 import jakarta.validation.Valid;
@@ -18,9 +20,11 @@ import java.util.UUID;
 public class DirectionController {
 
     private final DirectionService service;
+    private final DirectionSummaryService summaryService;
 
-    public DirectionController(DirectionService service) {
+    public DirectionController(DirectionService service, DirectionSummaryService summaryService) {
         this.service = service;
+        this.summaryService = summaryService;
     }
 
     @GetMapping
@@ -42,6 +46,11 @@ public class DirectionController {
     @GetMapping("/{id}")
     public DirectionResponse findById(@PathVariable UUID id) {
         return DirectionMapper.toResponse(service.findById(id));
+    }
+
+    @GetMapping("/{id}/summary")
+    public DirectionSummaryResponse getSummary(@PathVariable UUID id) {
+        return summaryService.getSummary(id);
     }
 
     @PutMapping("/{id}")

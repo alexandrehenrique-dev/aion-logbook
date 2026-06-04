@@ -148,8 +148,8 @@ class AnalyticsRepositoryTest {
 
         var result = repository.statusDistribution(userId, null, null);
 
-        assertThat(result).hasSize(2);
         assertThat(result)
+                .hasSize(2)
                 .anyMatch(item -> item.status().equals("COMPLETED") && item.count() == 2)
                 .anyMatch(item -> item.status().equals("PARTIAL") && item.count() == 1);
     }

@@ -1,93 +1,58 @@
 package br.com.byop.aionlogbook.security;
 
+import br.com.byop.aionlogbook.identity.application.UserProfileService;
 import br.com.byop.aionlogbook.identity.domain.UserProfile;
-import br.com.byop.aionlogbook.identity.infrastructure.UserProfileRepository;
-import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
+import java.lang.reflect.Field;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 class CurrentUserServiceTest {
 
-    private final AuthenticatedUserProvider authenticatedUserProvider =
-            mock(AuthenticatedUserProvider.class);
+    private final UserProfileService userProfileService = mock(UserProfileService.class);
+    private final CurrentUserService service = new CurrentUserService(userProfileService);
 
-    private final UserProfileRepository userProfileRepository =
-            mock(UserProfileRepository.class);
+    @Nested
+    class CurrentUserId {
 
-    private final CurrentUserService service = new CurrentUserService(
-            authenticatedUserProvider,
-            userProfileRepository
-    );
+        @Test
+        void shouldReturnIdFromExistingProfile() {
+            var profile = new UserProfile("sub-123", "user@test.local", "user_test", "Usuário Teste");
+            var expectedId = UUID.randomUUID();
+            setProfileId(profile, expectedId);
 
-    @Test
-    void shouldReturnCurrentUserProfileId() {
-        var userId = UUID.randomUUID();
-        var keycloakSubject = "keycloak-subject-123";
+            when(userProfileService.getOrCreateCurrentUserProfile()).thenReturn(profile);
 
-        var authenticatedUser = new AuthenticatedUser(
-                keycloakSubject,
-                "user@test.local",
-                "user_test",
-                "Usuário Teste"
-        );
+            var result = service.currentUserId();
 
-        var userProfile = new UserProfile(
-                keycloakSubject,
-                "user@test.local",
-                "user_test",
-                "Usuário Teste"
-        );
+            assertThat(result).isEqualTo(expectedId);
+            verify(userProfileService).getOrCreateCurrentUserProfile();
+        }
 
-        setUserProfileId(userProfile, userId);
+        @Test
+        void shouldCreateAndReturnIdForNewUser() {
+            var profile = new UserProfile("sub-new", "new@test.local", "new_user", "Novo Usuário");
 
-        when(authenticatedUserProvider.getCurrentUser()).thenReturn(authenticatedUser);
-        when(userProfileRepository.findByKeycloakSubject(keycloakSubject))
-                .thenReturn(Optional.of(userProfile));
+            when(userProfileService.getOrCreateCurrentUserProfile()).thenReturn(profile);
 
-        var result = service.currentUserId();
+            var result = service.currentUserId();
 
-        assertThat(result).isEqualTo(userId);
-
-        verify(authenticatedUserProvider).getCurrentUser();
-        verify(userProfileRepository).findByKeycloakSubject(keycloakSubject);
+            assertThat(result).isEqualTo(profile.getId());
+            verify(userProfileService).getOrCreateCurrentUserProfile();
+        }
     }
 
-    @Test
-    void shouldThrowWhenUserProfileDoesNotExist() {
-        var keycloakSubject = "missing-subject";
-
-        var authenticatedUser = new AuthenticatedUser(
-                keycloakSubject,
-                "missing@test.local",
-                "missing_user",
-                "Missing User"
-        );
-
-        when(authenticatedUserProvider.getCurrentUser()).thenReturn(authenticatedUser);
-        when(userProfileRepository.findByKeycloakSubject(keycloakSubject))
-                .thenReturn(Optional.empty());
-
-        assertThatThrownBy(service::currentUserId)
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessage("User profile not found");
-
-        verify(authenticatedUserProvider).getCurrentUser();
-        verify(userProfileRepository).findByKeycloakSubject(keycloakSubject);
-    }
-
-    private static void setUserProfileId(UserProfile userProfile, UUID id) {
+    private static void setProfileId(UserProfile profile, UUID id) {
         try {
-            var field = UserProfile.class.getDeclaredField("id");
+            Field field = UserProfile.class.getDeclaredField("id");
             field.setAccessible(true);
-            field.set(userProfile, id);
-        } catch (NoSuchFieldException | IllegalAccessException exception) {
-            throw new IllegalStateException("Could not set UserProfile id for test", exception);
+            field.set(profile, id);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new IllegalStateException("Could not set UserProfile id for test", e);
         }
     }
 }

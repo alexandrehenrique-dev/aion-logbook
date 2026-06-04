@@ -97,6 +97,10 @@ public interface PlanRepository extends JpaRepository<Plan, UUID> {
 
     long countByUserIdAndStatusIn(UUID userId, Collection<PlanStatus> statuses);
 
+    long countByUserIdAndDirectionId(UUID userId, UUID directionId);
+
+    long countByUserIdAndDirectionIdAndStatusIn(UUID userId, UUID directionId, Collection<PlanStatus> statuses);
+
     @Query("""
         select plan
         from Plan plan

@@ -11,6 +11,8 @@ public class SpaController {
             "/dashboard",
             "/directions/**",
             "/plans/**",
+            "/sessions/**",
+            "/calendar/**",
             "/analytics/**",
             "/settings/**",
             "/logbook/**",

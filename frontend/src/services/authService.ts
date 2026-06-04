@@ -1,12 +1,22 @@
 import { http } from '../lib/http/httpClient';
-import type { AuthUser } from '../types';
+import { isMockMode } from '../config/env';
+import type { UserProfile } from '../types';
+import { adaptMe, type MeResponse } from '../lib/api-adapters';
 
 export const authService = {
-  // Chamado em modo mock para encerrar sessão via MSW.
+  // Chamado apenas em modo mock para encerrar sessão via MSW.
   // Em modo keycloak, o logout é feito diretamente pelo keycloakClient.
-  logout: () => http.post<{ success: boolean }>('/auth/logout'),
+  logout: () => {
+    if (!isMockMode) return Promise.resolve({ success: true });
+    return http.post<{ success: boolean }>('/auth/logout');
+  },
 
-  // Usado futuramente quando o Spring Security estiver disponível
-  // para enriquecer os dados do perfil além do que está no token.
-  me: () => http.get<AuthUser>('/me'),
+  // Perfil do usuário autenticado. Em modo real, adapta MeResponse → UserProfile.
+  me: async (): Promise<UserProfile> => {
+    if (isMockMode) {
+      return http.get<UserProfile>('/me');
+    }
+    const raw = await http.get<MeResponse>('/me');
+    return adaptMe(raw);
+  },
 };

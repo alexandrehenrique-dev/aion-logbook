@@ -145,11 +145,11 @@ export function Dashboard() {
             </h3>
 
             <Card>
-              {[...data.plansInProgress, ...data.plansDue, ...data.plansMissed, ...data.plansCompleted].length === 0 ? (
+              {[...(data.plansPending ?? []), ...data.plansInProgress, ...data.plansDue, ...data.plansMissed, ...data.plansCompleted].length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano para hoje.</p>
               ) : (
                 <div className="space-y-4">
-                  {[...data.plansInProgress, ...data.plansDue, ...data.plansMissed, ...data.plansCompleted].map((plan, index) => (
+                  {[...(data.plansPending ?? []), ...data.plansInProgress, ...data.plansDue, ...data.plansMissed, ...data.plansCompleted].map((plan, index) => (
                     <motion.div
                       key={plan.id}
                       initial={{ opacity: 0, x: -10 }}
@@ -168,7 +168,8 @@ export function Dashboard() {
                           plan.status === 'COMPLETED' ? 'bg-emerald-500' :
                           plan.status === 'IN_PROGRESS' ? 'bg-primary' :
                           plan.status === 'MISSED' ? 'bg-destructive/50' :
-                          plan.status === 'DUE' ? 'bg-amber-500' : 'bg-border'
+                          plan.status === 'DUE' ? 'bg-amber-500' :
+                          plan.status === 'PENDING' ? 'bg-muted-foreground/30' : 'bg-border'
                         }`}
                       />
                       <div className="flex-1 min-w-0">
@@ -184,6 +185,7 @@ export function Dashboard() {
                       {plan.status === 'IN_PROGRESS' && <Clock className="w-5 h-5 text-primary shrink-0 animate-pulse mt-0.5" />}
                       {plan.status === 'MISSED' && <XCircle className="w-5 h-5 text-destructive/50 shrink-0 mt-0.5" />}
                       {plan.status === 'DUE' && <Bell className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />}
+                      {plan.status === 'PENDING' && <Clock className="w-5 h-5 text-muted-foreground/50 shrink-0 mt-0.5" />}
                     </motion.div>
                   ))}
                 </div>

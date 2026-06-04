@@ -42,6 +42,34 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aion-logbook-app
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      SERVER_CONTEXT_PATH: /logbook
+
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-aion_logbook}
+      DB_USERNAME: ${POSTGRES_USER:-aion_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-aion_password}
+
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/aion-logbook
+
+      CORS_ALLOWED_ORIGINS: http://192.168.0.77,http://192.168.0.77:8077
+
+      SWAGGER_ENABLED: "true"
+      FLYWAY_ENABLED: "true"
+      TELEGRAM_ENABLED: "false"
+    ports:
+      - "8077:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
 
 volumes:
   aion_postgres_data:

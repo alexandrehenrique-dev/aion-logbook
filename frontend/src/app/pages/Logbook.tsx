@@ -57,7 +57,7 @@ export function Logbook() {
 
   useEffect(() => {
     Promise.all([logbookService.list(), directionService.list()])
-      .then(([e, d]) => { setEntries(e); setDirections(d); })
+      .then(([e, d]) => { setEntries(e.data); setDirections(d); })
       .finally(() => setLoading(false));
   }, []);
 

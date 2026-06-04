@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# deploy.sh.example — Copie para deploy.sh e preencha as variáveis.
+# deploy.sh está no .gitignore e nunca deve ser commitado.
+#
+# Uso: ./deploy.sh
+
+set -euo pipefail
+
+# ─── Variáveis obrigatórias ───────────────────────────────────────────────────
+APP_HOST="seu-servidor.genesis-lab.dev"
+APP_USER="deploy"
+APP_DIR="/opt/aion-logbook"
+
+# Registry (deixar vazio para build local no servidor)
+DOCKER_REGISTRY=""
+IMAGE_TAG="latest"
+
+# ─── Build local antes do envio (opcional) ────────────────────────────────────
+echo "[deploy] Construindo frontend para o backend..."
+(cd frontend && npm ci && npm run build:backend)
+
+echo "[deploy] Construindo JAR do backend..."
+(cd backend && ./mvnw clean package -DskipTests -B --no-transfer-progress)
+
+# ─── Cópia do artefato para o servidor ───────────────────────────────────────
+echo "[deploy] Enviando JAR para ${APP_HOST}..."
+scp backend/target/aion-logbook-backend-*.jar \
+    "${APP_USER}@${APP_HOST}:${APP_DIR}/aion-logbook-backend.jar"
+
+# ─── Restart do serviço no servidor ──────────────────────────────────────────
+echo "[deploy] Reiniciando serviço remoto..."
+ssh "${APP_USER}@${APP_HOST}" "
+  cd ${APP_DIR}
+  docker compose pull --quiet || true
+  docker compose up -d --remove-orphans
+"
+
+echo "[deploy] Concluído."

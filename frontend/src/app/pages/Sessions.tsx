@@ -43,13 +43,14 @@ export function Sessions() {
 
   useEffect(() => {
     Promise.all([sessionService.list(), directionService.list()])
-      .then(([s, d]) => { setSessions(s); setDirections(d); })
+      .then(([s, d]) => { setSessions(s.data); setDirections(d); })
       .finally(() => setLoading(false));
   }, []);
 
   const dirMap = Object.fromEntries(directions.map((d) => [d.id, d]));
 
-  const today = new Date().toISOString().split('T')[0];
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const todaySessions = sessions.filter((s) => s.startedAt.startsWith(today));
   const todayMinutes = todaySessions.reduce((acc, s) => acc + s.durationMinutes, 0);
   const totalMinutes = sessions.reduce((acc, s) => acc + s.durationMinutes, 0);

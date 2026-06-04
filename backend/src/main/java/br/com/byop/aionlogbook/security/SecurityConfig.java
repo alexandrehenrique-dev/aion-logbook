@@ -26,7 +26,9 @@ public class SecurityConfig {
             "/",
             "/index.html",
             "/favicon.ico",
+            "/silent-check-sso.html",
             "/assets/**",
+            "/brand/**",
             "/*.js",
             "/*.css",
             "/*.ico",
@@ -112,6 +114,11 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                // SAMEORIGIN permite que o silent-check-sso.html do Keycloak.js seja carregado em iframe
+                // da mesma origem. DENY bloquearia o fluxo de check-sso e causaria loading infinito.
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
                 );
     }
 

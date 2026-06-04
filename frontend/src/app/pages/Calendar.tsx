@@ -37,15 +37,11 @@ export function Calendar() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    const dateFrom = toDateStr(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    const dateTo = toDateStr(year, month, lastDay);
-
     setLoading(true);
-    planService.list({ dateFrom, dateTo })
-      .then(setPlans)
+    // O backend não suporta filtro por range de datas — buscar com tamanho generoso
+    // e filtrar client-side para manter o calendário funcional.
+    planService.list({ size: 200 })
+      .then((page) => setPlans(page.data))
       .catch(() => setPlans([]))
       .finally(() => setLoading(false));
   }, [currentMonth]);

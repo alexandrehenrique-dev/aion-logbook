@@ -16,10 +16,16 @@ function getInstance(): Keycloak {
 }
 
 // Promise singleton: seguro chamar múltiplas vezes (React StrictMode).
+// onLoad: 'check-sso' restaura a sessão do Keycloak no reload da página.
+// silentCheckSsoRedirectUri usa um iframe invisível para checar a sessão sem redirecionar o browser.
 export function initKeycloak(): Promise<boolean> {
   const kc = getInstance();
   if (!_initPromise) {
-    _initPromise = kc.init({ pkceMethod: 'S256' });
+    _initPromise = kc.init({
+      pkceMethod: 'S256',
+      onLoad: 'check-sso',
+      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+    });
   }
   return _initPromise;
 }

@@ -4,6 +4,7 @@ import br.com.byop.aionlogbook.analytics.application.AnalyticsService;
 import br.com.byop.aionlogbook.analytics.infrastructure.AnalyticsRepository;
 import br.com.byop.aionlogbook.bugreport.application.CreateBugReportUseCase;
 import br.com.byop.aionlogbook.dashboard.application.DashboardService;
+import br.com.byop.aionlogbook.direction.application.DirectionSummaryService;
 import br.com.byop.aionlogbook.direction.infrastructure.DirectionRepository;
 import br.com.byop.aionlogbook.identity.application.UserProfileService;
 import br.com.byop.aionlogbook.identity.domain.UserProfile;
@@ -114,6 +115,9 @@ class SecurityConfigTest {
 
     @MockitoBean
     private AnalyticsRepository analyticsRepository;
+
+    @MockitoBean
+    private DirectionSummaryService directionSummaryService;
 
     @Nested
     class ApiV1 {

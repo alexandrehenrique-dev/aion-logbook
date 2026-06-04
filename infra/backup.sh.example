@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# backup.sh.example — Copie para backup.sh e preencha as variáveis.
+# backup.sh está no .gitignore e nunca deve ser commitado.
+#
+# Uso: ./backup.sh
+# Recomendado: rodar via cron diariamente antes do deploy.
+
+set -euo pipefail
+
+# ─── Variáveis obrigatórias ───────────────────────────────────────────────────
+POSTGRES_CONTAINER="aion-logbook-postgres"
+POSTGRES_USER="aion_user"
+POSTGRES_DB="aion_logbook"
+
+BACKUP_DIR="/opt/aion-logbook/backups"
+RETENTION_DAYS=30
+
+# ─── Geração do dump ─────────────────────────────────────────────────────────
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+BACKUP_FILE="${BACKUP_DIR}/aion_logbook_${TIMESTAMP}.sql.gz"
+
+mkdir -p "${BACKUP_DIR}"
+
+echo "[backup] Gerando dump do PostgreSQL..."
+docker exec "${POSTGRES_CONTAINER}" \
+    pg_dump -U "${POSTGRES_USER}" "${POSTGRES_DB}" \
+    | gzip > "${BACKUP_FILE}"
+
+echo "[backup] Dump salvo em: ${BACKUP_FILE}"
+
+# ─── Limpeza de backups antigos ───────────────────────────────────────────────
+echo "[backup] Removendo backups com mais de ${RETENTION_DAYS} dias..."
+find "${BACKUP_DIR}" -name "*.sql.gz" -mtime +"${RETENTION_DAYS}" -delete
+
+echo "[backup] Concluído."
+
+# ─── Rollback (uso manual) ────────────────────────────────────────────────────
+# Para restaurar:
+#   gunzip -c /opt/aion-logbook/backups/aion_logbook_YYYYMMDD_HHMMSS.sql.gz \
+#     | docker exec -i aion-logbook-postgres psql -U aion_user -d aion_logbook

@@ -8,10 +8,9 @@ export async function resolvePostLoginRoute(): Promise<string> {
       return status.completed ? '/dashboard' : '/onboarding';
     }
 
-    // Real mode: ask backend via GET /me or /onboarding/status
     const { userService } = await import('../../services/userService');
     const profile = await userService.getProfile();
-    return (profile as { onboardingCompleted?: boolean }).onboardingCompleted ? '/dashboard' : '/onboarding';
+    return profile.onboardingCompleted ? '/dashboard' : '/onboarding';
   } catch {
     return '/dashboard';
   }

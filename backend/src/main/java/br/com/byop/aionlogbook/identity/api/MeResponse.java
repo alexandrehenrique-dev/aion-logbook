@@ -11,6 +11,7 @@ public record MeResponse(
         String email,
         String username,
         String fullName,
+        boolean onboardingCompleted,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {
@@ -21,6 +22,7 @@ public record MeResponse(
                 profile.getEmail(),
                 profile.getUsername(),
                 profile.getFullName(),
+                profile.isOnboardingCompleted(),
                 profile.getCreatedAt(),
                 profile.getUpdatedAt()
         );

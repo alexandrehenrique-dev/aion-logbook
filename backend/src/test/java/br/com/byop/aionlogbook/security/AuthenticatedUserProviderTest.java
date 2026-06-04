@@ -65,5 +65,26 @@ class AuthenticatedUserProviderTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Usuário autenticado não encontrado.");
         }
+
+        @Test
+        void shouldThrowWhenJwtHasNoSubClaim() {
+            // Simula token sem claim 'sub' — ocorre quando o scope 'basic' está ausente no Keycloak
+            Jwt jwt = Jwt.withTokenValue("token")
+                    .header("alg", "none")
+                    .claim("email", "loki@byop.com")
+                    .claim("preferred_username", "loki")
+                    .claim("name", "Loki")
+                    .issuedAt(Instant.now())
+                    .expiresAt(Instant.now().plusSeconds(3600))
+                    .build();
+
+            SecurityContextHolder.getContext().setAuthentication(
+                    new TestingAuthenticationToken(jwt, null)
+            );
+
+            assertThatThrownBy(provider::getCurrentUser)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("claim 'sub' ausente");
+        }
     }
 }

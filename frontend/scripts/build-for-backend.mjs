@@ -22,6 +22,7 @@ const viteCommand = packageManager === 'pnpm' ? 'pnpm vite' : 'npx vite';
 console.log('Building frontend for Spring Boot backend...');
 console.log(`Target: ${staticDir}`);
 console.log(`Package manager: ${packageManager}`);
+console.log('Mode: backend (VITE_API_MODE=real, MSW desabilitado)');
 
 if (!existsSync(staticDir)) {
   console.log('Creating static directory...');
@@ -35,10 +36,14 @@ if (!existsSync(staticDir)) {
 }
 
 try {
-  execSync(`${packageManager} run typecheck && ${viteCommand} build --outDir "${staticDir}" --emptyOutDir`, {
-    cwd: frontendRoot,
-    stdio: 'inherit',
-  });
+  // Usar --mode backend para carregar .env.backend (VITE_API_MODE=real sem MSW)
+  execSync(
+    `${packageManager} run typecheck && ${viteCommand} build --mode backend --outDir "${staticDir}" --emptyOutDir`,
+    {
+      cwd: frontendRoot,
+      stdio: 'inherit',
+    }
+  );
   console.log(`\nBuild complete. Files written to: ${staticDir}`);
 } catch (err) {
   console.error('Build failed:', err.message);

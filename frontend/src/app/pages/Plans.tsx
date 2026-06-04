@@ -51,12 +51,24 @@ type NewPlanForm = {
   estimatedMinutes: number;
 };
 
+function localDateString(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function localTimezoneOffset(): string {
+  const offset = new Date().getTimezoneOffset(); // positive = west of UTC
+  const sign = offset <= 0 ? '+' : '-';
+  const abs = Math.abs(offset);
+  return `${sign}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
+}
+
 const EMPTY_FORM: NewPlanForm = {
   title: '',
   description: '',
   directionId: '',
   priority: 'MEDIUM',
-  plannedDate: new Date().toISOString().split('T')[0],
+  plannedDate: localDateString(),
   plannedStartAt: '',
   estimatedMinutes: 60,
 };
@@ -74,7 +86,7 @@ export function Plans() {
 
   useEffect(() => {
     Promise.all([planService.list(), directionService.list()])
-      .then(([p, d]) => { setPlans(p); setDirections(d); })
+      .then(([p, d]) => { setPlans(p.data); setDirections(d); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -86,9 +98,12 @@ export function Plans() {
     return matchesSearch && matchesStatus;
   });
 
+  const isValidTime = (t: string) => /^\d{2}:\d{2}$/.test(t);
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) return;
+    const hasTime = form.plannedStartAt && isValidTime(form.plannedStartAt);
     setSaving(true);
     try {
       const created = await planService.create({
@@ -96,9 +111,8 @@ export function Plans() {
         description: form.description || undefined,
         directionId: form.directionId || undefined,
         priority: form.priority,
-        status: 'PENDING',
         plannedDate: form.plannedDate || undefined,
-        plannedStartAt: form.plannedStartAt ? `${form.plannedDate}T${form.plannedStartAt}:00Z` : undefined,
+        plannedStartAt: hasTime ? `${form.plannedDate}T${form.plannedStartAt}:00${localTimezoneOffset()}` : undefined,
         estimatedMinutes: form.estimatedMinutes,
       });
       setPlans((prev) => [created, ...prev]);
@@ -357,9 +371,24 @@ export function Plans() {
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">Horário</label>
                     <input
-                      type="time"
+                      type="text"
                       value={form.plannedStartAt}
-                      onChange={(e) => setForm((p) => ({ ...p, plannedStartAt: e.target.value }))}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/[^0-9:]/g, '');
+                        setForm((p) => ({ ...p, plannedStartAt: v }));
+                      }}
+                      onBlur={(e) => {
+                        const v = e.target.value;
+                        if (!v) return;
+                        const match = v.match(/^(\d{1,2}):?(\d{2})$/);
+                        if (match) {
+                          const h = match[1].padStart(2, '0');
+                          const m = match[2];
+                          setForm((p) => ({ ...p, plannedStartAt: `${h}:${m}` }));
+                        }
+                      }}
+                      placeholder="18:30"
+                      maxLength={5}
                       className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>

@@ -6,9 +6,13 @@ export const env = {
   keycloakUrl: import.meta.env.VITE_KEYCLOAK_URL as string | undefined,
   keycloakRealm: import.meta.env.VITE_KEYCLOAK_REALM as string | undefined,
   keycloakClientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID as string | undefined,
+  // Módulo de notificações ainda não implementado no backend.
+  // Manter false até GET /api/v1/notifications existir.
+  enableNotifications: import.meta.env.VITE_ENABLE_NOTIFICATIONS === 'true',
 } as const;
 
 export const isMockMode = env.apiMode === 'mock';
 export const isRealApiMode = env.apiMode === 'real';
 export const isMockAuthMode = env.authMode === 'mock';
 export const isKeycloakAuthMode = env.authMode === 'keycloak';
+export const isNotificationsEnabled = env.enableNotifications;

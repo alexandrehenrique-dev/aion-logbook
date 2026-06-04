@@ -1,9 +1,11 @@
 package br.com.byop.aionlogbook.direction.api;
 
 import br.com.byop.aionlogbook.direction.application.DirectionService;
+import br.com.byop.aionlogbook.direction.application.DirectionSummaryService;
 import br.com.byop.aionlogbook.direction.domain.Direction;
 import br.com.byop.aionlogbook.direction.domain.DirectionStatus;
 import br.com.byop.aionlogbook.direction.dto.CreateDirectionRequest;
+import br.com.byop.aionlogbook.direction.dto.DirectionSummaryResponse;
 import br.com.byop.aionlogbook.direction.dto.UpdateDirectionRequest;
 import br.com.byop.aionlogbook.identity.domain.UserProfile;
 import br.com.byop.aionlogbook.shared.error.DirectionNotFoundException;
@@ -55,6 +57,9 @@ class DirectionControllerTest {
 
     @MockitoBean
     private DirectionService service;
+
+    @MockitoBean
+    private DirectionSummaryService summaryService;
 
     @MockitoBean
     private Clock clock;
@@ -242,6 +247,50 @@ class DirectionControllerTest {
             doThrow(new DirectionNotFoundException()).when(service).archive(directionId);
 
             mockMvc.perform(delete("/api/v1/directions/{id}", directionId))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"));
+        }
+    }
+
+    @Nested
+    class FindSummary {
+
+        @Test
+        void shouldReturnSummary() throws Exception {
+            UUID directionId = UUID.randomUUID();
+            DirectionSummaryResponse summary = new DirectionSummaryResponse(
+                    directionId,
+                    "Carreira",
+                    "Direção profissional",
+                    "#00FF99",
+                    "compass",
+                    DirectionStatus.ACTIVE,
+                    "Construir com presença",
+                    NOW,
+                    NOW,
+                    10L, 6L, 3L, 5L, 120L
+            );
+
+            when(summaryService.getSummary(directionId)).thenReturn(summary);
+
+            mockMvc.perform(get("/api/v1/directions/{id}/summary", directionId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(directionId.toString()))
+                    .andExpect(jsonPath("$.name").value("Carreira"))
+                    .andExpect(jsonPath("$.totalPlans").value(10))
+                    .andExpect(jsonPath("$.completedPlans").value(6))
+                    .andExpect(jsonPath("$.activePlans").value(3))
+                    .andExpect(jsonPath("$.totalSessions").value(5))
+                    .andExpect(jsonPath("$.totalSessionMinutes").value(120));
+        }
+
+        @Test
+        void shouldReturnNotFoundWhenDirectionDoesNotBelongToCurrentUser() throws Exception {
+            UUID directionId = UUID.randomUUID();
+
+            when(summaryService.getSummary(directionId)).thenThrow(new DirectionNotFoundException());
+
+            mockMvc.perform(get("/api/v1/directions/{id}/summary", directionId))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"));
         }

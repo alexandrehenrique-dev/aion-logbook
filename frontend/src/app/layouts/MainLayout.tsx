@@ -25,8 +25,11 @@ import { BugReportModal } from '../../features/bug-report/BugReportModal';
 import { notificationService } from '../../services/notificationService';
 import type { AppNotification } from '../../services/notificationService';
 import { browserNotificationService } from '../../services/browserNotificationService';
+import { toast } from '../../utils/toast';
 import { searchService } from '../../services/searchService';
 import type { SearchResult } from '../../services/searchService';
+
+const POLL_INTERVAL_MS = 30_000;
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -269,11 +272,28 @@ export function MainLayout({ children }: { children: ReactNode }) {
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const seenIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    notificationService.list()
-      .then((notifs) => setUnreadCount(notifs.filter((n) => n.unread).length))
-      .catch(() => {});
+    const poll = () => {
+      notificationService.list()
+        .then((notifs) => {
+          setUnreadCount(notifs.filter((n) => n.unread).length);
+
+          notifs
+            .filter((n) => n.unread && !seenIds.current.has(n.id))
+            .forEach((n) => {
+              seenIds.current.add(n.id);
+              // toast.notify dispara sonner (in-app) + browser notification quando tab está oculta
+              toast.notify(n.title, n.description ?? undefined);
+            });
+        })
+        .catch(() => {});
+    };
+
+    poll();
+    const timer = setInterval(poll, POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {

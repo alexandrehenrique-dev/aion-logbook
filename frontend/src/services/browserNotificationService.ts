@@ -18,7 +18,7 @@ export const browserNotificationService = {
     if (!this.isSupported() || Notification.permission !== 'granted') return;
     const tabHidden = typeof document !== 'undefined' && document.hidden;
     if (!tabHidden && !options?.alwaysFire) return;
-    const { onClick, alwaysFire: _, ...notifOptions } = options ?? {};
+    const { onClick, alwaysFire: _ignored, ...notifOptions } = options ?? {};
     const notif = new Notification(title, {
       icon: '/favicon.svg',
       badge: '/favicon.svg',

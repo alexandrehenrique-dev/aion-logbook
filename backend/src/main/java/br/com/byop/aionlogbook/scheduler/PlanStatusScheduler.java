@@ -17,6 +17,11 @@ public class PlanStatusScheduler {
         this.planSchedulerService = planSchedulerService;
     }
 
+    @Scheduled(fixedDelayString = "${aion.scheduler.reminder.fixed-delay:60000}")
+    public void runReminderJob() {
+        run("REMINDER", planSchedulerService::sendReminders);
+    }
+
     @Scheduled(fixedDelayString = "${aion.scheduler.due.fixed-delay:60000}")
     public void runDueJob() {
         run("DUE", planSchedulerService::markDuePlans);

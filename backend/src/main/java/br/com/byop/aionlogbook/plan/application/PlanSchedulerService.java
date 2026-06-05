@@ -1,5 +1,6 @@
 package br.com.byop.aionlogbook.plan.application;
 
+import br.com.byop.aionlogbook.notification.application.NotificationService;
 import br.com.byop.aionlogbook.plan.domain.Plan;
 import br.com.byop.aionlogbook.plan.domain.PlanEvent;
 import br.com.byop.aionlogbook.plan.domain.PlanEventType;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -24,18 +26,22 @@ public class PlanSchedulerService {
 
     private static final Logger log = LoggerFactory.getLogger(PlanSchedulerService.class);
     private static final int BATCH_SIZE = 500;
+    private static final Duration REMINDER_ADVANCE = Duration.ofMinutes(10);
 
     private final PlanRepository planRepository;
     private final PlanEventRepository planEventRepository;
+    private final NotificationService notificationService;
     private final Clock clock;
 
     public PlanSchedulerService(
             PlanRepository planRepository,
             PlanEventRepository planEventRepository,
+            NotificationService notificationService,
             Clock clock
     ) {
         this.planRepository = planRepository;
         this.planEventRepository = planEventRepository;
+        this.notificationService = notificationService;
         this.clock = clock;
     }
 
@@ -67,6 +73,36 @@ public class PlanSchedulerService {
         plans.forEach(plan -> transition(plan, PlanStatus.MISSED, PlanEventType.MISSED, now));
 
         return plans.size();
+    }
+
+    @Transactional
+    public int sendReminders() {
+        var now = Instant.now(clock);
+        // Finds plans whose reminder time has already passed:
+        //   - explicit notificationDateTime <= now, OR
+        //   - plannedStartAt <= now + 10 min (implicit 10-min-before window)
+        var reminderCutoff = now.plus(REMINDER_ADVANCE);
+
+        var candidates = planRepository.findReminderCandidates(
+                now,
+                reminderCutoff,
+                List.of(PlanStatus.SCHEDULED, PlanStatus.PENDING),
+                PageRequest.of(0, BATCH_SIZE)
+        );
+
+        log.info("scheduler.reminder.candidates count={}", candidates.size());
+
+        int sent = 0;
+        for (var plan : candidates) {
+            if (notificationService.reminderAlreadySent(plan.getId(), plan.getUserId())) {
+                log.debug("scheduler.reminder.skip planId={} — already sent", plan.getId());
+                continue;
+            }
+            notificationService.createPlanReminder(plan, now);
+            log.info("scheduler.reminder.sent planId={} title={}", plan.getId(), plan.getTitle());
+            sent++;
+        }
+        return sent;
     }
 
     private void transition(

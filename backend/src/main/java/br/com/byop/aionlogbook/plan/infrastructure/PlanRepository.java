@@ -140,4 +140,23 @@ public interface PlanRepository extends JpaRepository<Plan, UUID> {
             LocalDate plannedDate,
             Collection<PlanStatus> statuses
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select plan from Plan plan
+        where plan.notify = true
+          and plan.plannedStartAt is not null
+          and plan.status in :statuses
+          and (
+            (plan.notificationDateTime is not null and plan.notificationDateTime <= :now)
+            or (plan.notificationDateTime is null and plan.plannedStartAt <= :reminderCutoff)
+          )
+        order by plan.plannedStartAt asc
+        """)
+    List<Plan> findReminderCandidates(
+            @Param("now") Instant now,
+            @Param("reminderCutoff") Instant reminderCutoff,
+            @Param("statuses") Collection<PlanStatus> statuses,
+            Pageable pageable
+    );
 }

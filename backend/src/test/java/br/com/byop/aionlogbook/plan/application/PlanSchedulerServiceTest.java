@@ -1,5 +1,6 @@
 package br.com.byop.aionlogbook.plan.application;
 
+import br.com.byop.aionlogbook.notification.application.NotificationService;
 import br.com.byop.aionlogbook.plan.domain.Plan;
 import br.com.byop.aionlogbook.plan.domain.PlanEvent;
 import br.com.byop.aionlogbook.plan.domain.PlanEventType;
@@ -21,6 +22,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,12 +37,15 @@ class PlanSchedulerServiceTest {
     @Mock
     private PlanEventRepository planEventRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     private PlanSchedulerService service;
 
     @BeforeEach
     void setUp() {
         var clock = Clock.fixed(NOW, ZoneOffset.UTC);
-        service = new PlanSchedulerService(planRepository, planEventRepository, clock);
+        service = new PlanSchedulerService(planRepository, planEventRepository, notificationService, clock);
     }
 
     @Test
@@ -96,6 +102,61 @@ class PlanSchedulerServiceTest {
         service.markDuePlans();
 
         verify(planEventRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldSendReminderForEligiblePlan() {
+        var plan = plan(PlanStatus.SCHEDULED);
+        plan.setNotify(true);
+        plan.setPlannedStartAt(NOW.plusSeconds(300)); // 5 min in the future — dentro da janela de 10 min
+
+        when(planRepository.findReminderCandidates(
+                eq(NOW),
+                any(Instant.class),
+                anyCollection(),
+                any(Pageable.class)
+        )).thenReturn(List.of(plan));
+
+        when(notificationService.reminderAlreadySent(plan.getId(), plan.getUserId()))
+                .thenReturn(false);
+
+        var count = service.sendReminders();
+
+        assertThat(count).isEqualTo(1);
+        verify(notificationService).createPlanReminder(eq(plan), eq(NOW));
+    }
+
+    @Test
+    void shouldNotSendDuplicateReminder() {
+        var plan = plan(PlanStatus.SCHEDULED);
+        plan.setNotify(true);
+
+        when(planRepository.findReminderCandidates(
+                eq(NOW),
+                any(Instant.class),
+                anyCollection(),
+                any(Pageable.class)
+        )).thenReturn(List.of(plan));
+
+        when(notificationService.reminderAlreadySent(plan.getId(), plan.getUserId()))
+                .thenReturn(true);
+
+        var count = service.sendReminders();
+
+        assertThat(count).isZero();
+        verify(notificationService, never()).createPlanReminder(any(), any());
+    }
+
+    @Test
+    void shouldReturnZeroWhenNoCandidates() {
+        when(planRepository.findReminderCandidates(
+                any(), any(), anyCollection(), any(Pageable.class)
+        )).thenReturn(List.of());
+
+        var count = service.sendReminders();
+
+        assertThat(count).isZero();
+        verify(notificationService, never()).createPlanReminder(any(), any());
     }
 
     private Plan plan(PlanStatus status) {

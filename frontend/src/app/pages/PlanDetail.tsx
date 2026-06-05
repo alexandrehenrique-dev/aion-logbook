@@ -126,10 +126,10 @@ export function PlanDetail() {
       });
       closeModal();
       await reload();
-      toast.success('Plano modificado');
+      toast.success('Plano atualizado com sucesso.');
     } catch (e: unknown) {
-      const msg = (e as { body?: { error?: string } })?.body?.error ?? 'Erro ao modificar plano.';
-      toast.error('Erro', msg);
+      const msg = (e as { body?: { error?: string } })?.body?.error ?? 'Não foi possível atualizar o plano.';
+      toast.error('Algo não saiu como esperado.', msg);
     } finally {
       setSubmitting(false);
     }
@@ -173,8 +173,8 @@ export function PlanDetail() {
       await reload();
       toast.success('Ação registrada com sucesso');
     } catch (e: unknown) {
-      const msg = (e as { body?: { error?: string } })?.body?.error ?? 'Erro ao executar ação.';
-      toast.error('Erro', msg);
+      const msg = (e as { body?: { error?: string } })?.body?.error ?? 'Não foi possível executar a ação.';
+      toast.error('Algo não saiu como esperado.', msg);
     } finally {
       setSubmitting(false);
     }

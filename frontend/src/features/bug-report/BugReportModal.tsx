@@ -51,11 +51,11 @@ export function BugReportModal({ onClose }: Props) {
         metadata: { url: window.location.href },
       });
       setStatus('success');
-      toast.success('Bug report enviado', 'Obrigado pelo feedback!');
+      toast.success('Obrigado pelo feedback!', 'Seu relato foi enviado para análise.');
       setTimeout(onClose, 1500);
     } catch {
       setStatus('error');
-      toast.error('Erro ao enviar report');
+      toast.error('Não conseguimos enviar o relato agora.');
     }
   };
 
@@ -151,7 +151,7 @@ export function BugReportModal({ onClose }: Props) {
               </div>
 
               {status === 'error' && (
-                <p className="text-sm text-destructive">Erro ao enviar. Tente novamente.</p>
+                <p className="text-sm text-destructive">Não conseguimos enviar. Tente novamente.</p>
               )}
 
               <div className="flex gap-3 pt-2">
@@ -167,7 +167,7 @@ export function BugReportModal({ onClose }: Props) {
                   disabled={status === 'submitting' || !canSubmit}
                   className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
-                  {status === 'submitting' ? 'Enviando...' : 'Enviar report'}
+                  {status === 'submitting' ? 'Enviando...' : 'Enviar relato'}
                 </button>
               </div>
             </form>

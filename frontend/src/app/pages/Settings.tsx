@@ -39,10 +39,10 @@ export function Settings() {
       const updated = await settingsService.update(settings);
       setSettings(updated);
       setSaved(true);
-      toast.success('Configurações salvas');
+      toast.success('Configurações salvas com sucesso.');
       setTimeout(() => setSaved(false), 2500);
     } catch {
-      toast.error('Erro ao salvar configurações');
+      toast.error('Não conseguimos salvar as configurações agora.');
     } finally {
       setSaving(false);
     }
@@ -51,8 +51,8 @@ export function Settings() {
   const handleRequestBrowserPermission = async () => {
     const perm = await browserNotificationService.requestPermission();
     setBrowserPermission(perm);
-    if (perm === 'granted') toast.success('Notificações do navegador ativadas');
-    else if (perm === 'denied') toast.error('Permissão negada', 'Ative nas configurações do navegador');
+    if (perm === 'granted') toast.success('Notificações ativadas', 'Você será avisado mesmo fora da aba.');
+    else if (perm === 'denied') toast.error('Permissão negada', 'Ative nas configurações do navegador para receber avisos.');
   };
 
   const updateSetting = <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {

@@ -11,6 +11,7 @@ public record DashboardTodayResponse(
         List<DashboardPlanResponse> plansMissed,
         List<DashboardPlanResponse> plansCompleted,
         List<DashboardPlanResponse> plansPending,
+        List<DashboardPlanResponse> plansScheduled,
         Integer totalEnergyMinutes,
         Double completionRate,
         Long activeDirections,

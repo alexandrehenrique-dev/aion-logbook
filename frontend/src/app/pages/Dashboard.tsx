@@ -1,6 +1,7 @@
 import {
   Bell,
   Calendar,
+  CalendarClock,
   CheckCircle2,
   Clock,
   PauseCircle,
@@ -73,7 +74,7 @@ export function Dashboard() {
     );
   }
 
-  const currentFocus = data.plansInProgress[0] ?? data.plansDue[0] ?? null;
+  const currentFocus = data.plansInProgress[0] ?? data.plansDue[0] ?? (data.plansScheduled ?? [])[0] ?? null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -145,11 +146,11 @@ export function Dashboard() {
             </h3>
 
             <Card>
-              {[...(data.plansPending ?? []), ...data.plansInProgress, ...data.plansDue, ...data.plansMissed, ...data.plansCompleted].length === 0 ? (
+              {[...data.plansInProgress, ...data.plansDue, ...(data.plansScheduled ?? []), ...(data.plansPending ?? []), ...data.plansMissed, ...data.plansCompleted].length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Nenhum plano para hoje.</p>
               ) : (
                 <div className="space-y-4">
-                  {[...(data.plansPending ?? []), ...data.plansInProgress, ...data.plansDue, ...data.plansMissed, ...data.plansCompleted].map((plan, index) => (
+                  {[...data.plansInProgress, ...data.plansDue, ...(data.plansScheduled ?? []), ...(data.plansPending ?? []), ...data.plansMissed, ...data.plansCompleted].map((plan, index) => (
                     <motion.div
                       key={plan.id}
                       initial={{ opacity: 0, x: -10 }}
@@ -169,6 +170,7 @@ export function Dashboard() {
                           plan.status === 'IN_PROGRESS' ? 'bg-primary' :
                           plan.status === 'MISSED' ? 'bg-destructive/50' :
                           plan.status === 'DUE' ? 'bg-amber-500' :
+                          plan.status === 'SCHEDULED' ? 'bg-violet-400' :
                           plan.status === 'PENDING' ? 'bg-muted-foreground/30' : 'bg-border'
                         }`}
                       />
@@ -185,6 +187,7 @@ export function Dashboard() {
                       {plan.status === 'IN_PROGRESS' && <Clock className="w-5 h-5 text-primary shrink-0 animate-pulse mt-0.5" />}
                       {plan.status === 'MISSED' && <XCircle className="w-5 h-5 text-destructive/50 shrink-0 mt-0.5" />}
                       {plan.status === 'DUE' && <Bell className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />}
+                      {plan.status === 'SCHEDULED' && <CalendarClock className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />}
                       {plan.status === 'PENDING' && <Clock className="w-5 h-5 text-muted-foreground/50 shrink-0 mt-0.5" />}
                     </motion.div>
                   ))}
@@ -200,6 +203,33 @@ export function Dashboard() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="space-y-4 md:space-y-6"
           >
+            {(data.plansScheduled ?? []).length > 0 && (
+              <Card hover>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-foreground flex items-center gap-2 text-sm">
+                    <CalendarClock className="w-4 h-4 text-violet-400" />
+                    Planejados para hoje
+                  </h4>
+                  <span className="text-xs bg-violet-400/20 text-violet-600 dark:text-violet-300 px-2 py-0.5 rounded-full">
+                    {data.plansScheduled!.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {data.plansScheduled!.map((p) => (
+                    <div key={p.id} className="text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded-lg transition-colors" onClick={() => navigate(`/plans/${p.id}`)}>
+                      <p className="text-foreground font-medium truncate">{p.title}</p>
+                      {p.plannedStartAt && (
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(p.plannedStartAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          {p.directionId && dirMap[p.directionId] ? ` · ${dirMap[p.directionId].name}` : ''}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
             {data.plansDue.length > 0 && (
               <Card hover>
                 <div className="flex items-center justify-between mb-3">

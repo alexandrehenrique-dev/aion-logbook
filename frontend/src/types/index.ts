@@ -136,6 +136,7 @@ export type DashboardToday = {
   plansMissed: Plan[];
   plansCompleted: Plan[];
   plansPending?: Plan[];
+  plansScheduled?: Plan[];
   activeDirections?: number;
   lastSessions?: SessionLog[];
   lastLogEntries?: LogEntry[];

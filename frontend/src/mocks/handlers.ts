@@ -296,7 +296,9 @@ function buildDashboardToday(): DashboardToday {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
   const completed = todayPlans.filter((p) => p.status === 'COMPLETED' || p.status === 'PARTIAL');
-  const completionRate = todayPlans.length > 0 ? Math.round((completed.length / todayPlans.length) * 100) : 0;
+  const scheduled = todayPlans.filter((p) => p.status === 'SCHEDULED');
+  const totalPlans = todayPlans.length;
+  const completionRate = totalPlans > 0 ? Math.round((completed.length / totalPlans) * 100) : 0;
   const totalEnergy = sessions
     .filter((s) => s.startedAt.startsWith(todayStr))
     .reduce((acc, s) => acc + s.durationMinutes, 0);
@@ -309,6 +311,7 @@ function buildDashboardToday(): DashboardToday {
     plansMissed: todayPlans.filter((p) => p.status === 'MISSED'),
     plansCompleted: completed,
     plansPending: todayPlans.filter((p) => p.status === 'PENDING'),
+    plansScheduled: scheduled,
     activeDirections: directions.filter((d) => d.status === 'ACTIVE').length,
     lastSessions: sessions.slice(-3),
     lastLogEntries: logs.slice(-3),

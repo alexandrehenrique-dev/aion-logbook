@@ -54,6 +54,7 @@ class DashboardControllerTest {
                     List.of(),
                     List.of(),
                     List.of(),
+                    List.of(),
                     90,
                     75.0,
                     2L,

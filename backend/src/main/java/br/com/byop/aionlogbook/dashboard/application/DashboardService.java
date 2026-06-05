@@ -84,6 +84,12 @@ public class DashboardService {
                 PlanStatus.PENDING
         );
 
+        var plansScheduled = planRepository.findTodayByUserIdAndStatus(
+                userId,
+                today,
+                PlanStatus.SCHEDULED
+        );
+
         Integer totalEnergyMinutes = sessionLogRepository.sumDurationMinutesByUserIdBetween(
                 userId,
                 startOfDay,
@@ -105,6 +111,7 @@ public class DashboardService {
 
         Double completionRate = calculateCompletionRate(
                 plansPending.size(),
+                plansScheduled.size(),
                 plansDue.size(),
                 plansMissed.size(),
                 plansCompleted.size()
@@ -118,6 +125,7 @@ public class DashboardService {
                 plansMissed.stream().map(this::toPlanResponse).toList(),
                 plansCompleted.stream().map(this::toPlanResponse).toList(),
                 plansPending.stream().map(this::toPlanResponse).toList(),
+                plansScheduled.stream().map(this::toPlanResponse).toList(),
                 safeInteger(totalEnergyMinutes),
                 completionRate,
                 activeDirections,
@@ -213,11 +221,12 @@ public class DashboardService {
 
     private Double calculateCompletionRate(
             int pending,
+            int scheduled,
             int due,
             int missed,
             int completed
     ) {
-        int total = pending + due + missed + completed;
+        int total = pending + scheduled + due + missed + completed;
 
         if (total == 0) {
             return 0.0;

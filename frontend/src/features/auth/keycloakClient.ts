@@ -24,8 +24,8 @@ export function initKeycloak(): Promise<boolean> {
   if (!_initPromise) {
     _initPromise = kc.init({
       pkceMethod: 'S256',
-      checkLoginIframe: false,
       onLoad: 'check-sso',
+      checkLoginIframe: false,
     });
   }
 
@@ -34,7 +34,7 @@ export function initKeycloak(): Promise<boolean> {
 
 export function keycloakLogin(): Promise<void> {
   return getInstance().login({
-    redirectUri: logbookBaseUrl,
+    redirectUri: `${window.location.origin}/logbook/`,
   });
 }
 

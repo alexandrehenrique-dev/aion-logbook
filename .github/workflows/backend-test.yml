@@ -28,4 +28,4 @@ jobs:
 
       - name: Run tests
         working-directory: backend
-        run: ./mvnw clean verify -B --no-transfer-progress
+        run: mvn clean verify -B --no-transfer-progress

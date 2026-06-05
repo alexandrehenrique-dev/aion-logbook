@@ -69,7 +69,7 @@ services:
 
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/aion-logbook
 
-      CORS_ALLOWED_ORIGINS: http://192.168.0.77,http://192.168.0.77:8077
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
 
       SWAGGER_ENABLED: "true"
       FLYWAY_ENABLED: "true"

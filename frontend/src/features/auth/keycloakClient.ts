@@ -4,7 +4,8 @@ import { env } from '../../config/env';
 let _keycloak: Keycloak | null = null;
 let _initPromise: Promise<boolean> | null = null;
 
-const logbookBaseUrl = `${window.location.origin}/logbook/`;
+// BASE_URL é "/" em dev (Vite default) e "/logbook/" em prod (VITE_BASE_PATH=/logbook/).
+const logbookBaseUrl = `${window.location.origin}${import.meta.env.BASE_URL}`;
 
 function getInstance(): Keycloak {
   if (!_keycloak) {

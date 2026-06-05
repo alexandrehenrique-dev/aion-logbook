@@ -15,7 +15,7 @@ public class SpaController {
             "/calendar/**",
             "/analytics/**",
             "/settings/**",
-            "/logbook/**",
+            "/journal",
             "/onboarding",
             "/login"
     })

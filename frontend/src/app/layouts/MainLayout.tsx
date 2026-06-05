@@ -31,7 +31,7 @@ const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/plans', label: 'Planos', icon: BookOpen },
   { path: '/directions', label: 'Direções', icon: Compass },
-  { path: '/logbook', label: 'Logbook', icon: BookMarked },
+  { path: '/journal', label: 'Logbook', icon: BookMarked },
   { path: '/analytics', label: 'Observatório', icon: BarChart3 },
   { path: '/sessions', label: 'Sessões', icon: Clock },
   { path: '/calendar', label: 'Calendário', icon: CalendarIcon },

@@ -23,7 +23,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <Toaster richColors position="top-right" />
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
@@ -102,7 +102,7 @@ export default function App() {
               }
             />
             <Route
-              path="/logbook"
+              path="/journal"
               element={
                 <ProtectedRoute>
                   <MainLayout><Logbook /></MainLayout>

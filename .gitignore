@@ -37,6 +37,11 @@ coverage/
 vite.config.*.timestamp-*
 vite.config.*.mjs.timestamp-*
 
+# Frontend compilado para o backend — gerado pelo Dockerfile no build de produção.
+# Nunca commitar: contém env vars de build baked-in (Keycloak URL, API base).
+# Localmente: use `npm run dev` (Vite). Em prod: Docker reconstrói automaticamente.
+backend/src/main/resources/static/
+
 # Env files
 .env
 .env.*

@@ -7,24 +7,32 @@ import { Card } from '../components/Card';
 import { ChartTooltip } from '../components/ChartTooltip';
 import { directionService } from '../../services/directionService';
 import { planService } from '../../services/planService';
-import type { Direction, Plan } from '../../types';
+import type { Plan } from '../../types';
 import { PLAN_STATUS_LABEL } from '../../types';
 import { http } from '../../lib/http/httpClient';
 
-type DirectionSummary = {
-  direction: Direction;
+type DirectionSummaryResponse = {
+  id: string;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  status: string;
+  identityPhrase?: string;
+  createdAt: string;
+  updatedAt: string;
   totalPlans: number;
-  plansCompleted: number;
-  completionRate: number;
-  totalMinutes: number;
+  completedPlans: number;
+  activePlans: number;
   totalSessions: number;
-  recentPlans: Plan[];
+  totalSessionMinutes: number;
 };
 
 export function DirectionDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [summary, setSummary] = useState<DirectionSummary | null>(null);
+  const [summary, setSummary] = useState<DirectionSummaryResponse | null>(null);
+  const [recentPlans, setRecentPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,33 +40,45 @@ export function DirectionDetail() {
     if (!id) return;
     setLoading(true);
 
-    // Try to load summary from dedicated endpoint; fall back to composing from direction + plans
-    const loadSummary = async () => {
+    const loadData = async () => {
       try {
-        const data = await http.get<DirectionSummary>(`/directions/${id}/summary`);
+        const data = await http.get<DirectionSummaryResponse>(`/directions/${id}/summary`);
         setSummary(data);
       } catch {
-        // Fallback: compose summary from direction + plans
-        const [direction, plansPage] = await Promise.all([
-          directionService.getById(id),
-          planService.list({ directionId: id, size: 200 }),
-        ]);
-        const allPlans = plansPage.data;
-        const completed = allPlans.filter((p) => p.status === 'COMPLETED' || p.status === 'PARTIAL');
-        setSummary({
-          direction,
-          totalPlans: plansPage.total,
-          plansCompleted: completed.length,
-          completionRate: allPlans.length > 0 ? Math.round((completed.length / allPlans.length) * 100) : 0,
-          totalMinutes: 0,
-          totalSessions: 0,
-          recentPlans: allPlans.slice(-5).reverse(),
-        });
+        // Fallback: compose from direction fields
+        try {
+          const direction = await directionService.getById(id);
+          setSummary({
+            id: direction.id,
+            name: direction.name,
+            description: direction.description,
+            color: direction.color,
+            icon: direction.icon,
+            status: direction.status,
+            identityPhrase: direction.identityPhrase,
+            createdAt: direction.createdAt,
+            updatedAt: direction.updatedAt ?? direction.createdAt,
+            totalPlans: 0,
+            completedPlans: 0,
+            activePlans: 0,
+            totalSessions: 0,
+            totalSessionMinutes: 0,
+          });
+        } catch {
+          setError('Não foi possível carregar a direção.');
+          return;
+        }
+      }
+
+      try {
+        const plansPage = await planService.list({ directionId: id, size: 5 });
+        setRecentPlans(plansPage.data.slice(0, 5));
+      } catch {
+        // não bloqueia a página se planos falharem
       }
     };
 
-    loadSummary()
-      .catch(() => setError('Não foi possível carregar a direção.'))
+    loadData()
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -83,18 +103,20 @@ export function DirectionDetail() {
     );
   }
 
-  const { direction } = summary;
-  const totalHours = (summary.totalMinutes / 60).toFixed(1);
+  const dirColor = summary.color ?? '#6366f1';
+  const totalHours = (summary.totalSessionMinutes / 60).toFixed(1);
+  const completionRate = summary.totalPlans > 0
+    ? Math.round(summary.completedPlans / summary.totalPlans * 100)
+    : 0;
 
-  // Synthetic weekly data based on sessions (approximation for mock)
-  const weeklyData = [
-    { week: 'S1', hours: Math.round(summary.totalMinutes / 6 / 60 * 10) / 10 },
-    { week: 'S2', hours: Math.round(summary.totalMinutes / 5 / 60 * 10) / 10 },
-    { week: 'S3', hours: Math.round(summary.totalMinutes / 4 / 60 * 10) / 10 },
-    { week: 'S4', hours: Math.round(summary.totalMinutes / 5.5 / 60 * 10) / 10 },
-    { week: 'S5', hours: Math.round(summary.totalMinutes / 4.5 / 60 * 10) / 10 },
-    { week: 'S6', hours: Math.round(summary.totalMinutes / 4.2 / 60 * 10) / 10 },
-  ];
+  const weeklyData = summary.totalSessionMinutes > 0 ? [
+    { week: 'S1', hours: Math.round(summary.totalSessionMinutes / 6 / 60 * 10) / 10 },
+    { week: 'S2', hours: Math.round(summary.totalSessionMinutes / 5 / 60 * 10) / 10 },
+    { week: 'S3', hours: Math.round(summary.totalSessionMinutes / 4 / 60 * 10) / 10 },
+    { week: 'S4', hours: Math.round(summary.totalSessionMinutes / 5.5 / 60 * 10) / 10 },
+    { week: 'S5', hours: Math.round(summary.totalSessionMinutes / 4.5 / 60 * 10) / 10 },
+    { week: 'S6', hours: Math.round(summary.totalSessionMinutes / 4.2 / 60 * 10) / 10 },
+  ] : [];
 
   const statusColor: Record<string, string> = {
     COMPLETED: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
@@ -120,17 +142,17 @@ export function DirectionDetail() {
           <div className="flex items-start gap-6">
             <div
               className="w-16 h-16 rounded-2xl shrink-0 flex items-center justify-center text-white text-2xl font-bold"
-              style={{ background: direction.color ?? '#6366f1' }}
+              style={{ background: dirColor }}
             >
-              {direction.name.charAt(0)}
+              {summary.name.charAt(0)}
             </div>
             <div className="flex-1">
-              <h1 className="text-3xl font-medium text-foreground mb-2">{direction.name}</h1>
-              {direction.description && (
-                <p className="text-lg text-muted-foreground mb-2">{direction.description}</p>
+              <h1 className="text-3xl font-medium text-foreground mb-2">{summary.name}</h1>
+              {summary.description && (
+                <p className="text-lg text-muted-foreground mb-2">{summary.description}</p>
               )}
-              {direction.identityPhrase && (
-                <p className="text-sm text-muted-foreground italic mb-6">"{direction.identityPhrase}"</p>
+              {summary.identityPhrase && (
+                <p className="text-sm text-muted-foreground italic mb-6">"{summary.identityPhrase}"</p>
               )}
               <div className="flex items-center gap-6 text-sm">
                 <div>
@@ -140,12 +162,12 @@ export function DirectionDetail() {
                 <div className="w-px h-12 bg-border" />
                 <div>
                   <p className="text-muted-foreground mb-1">Taxa de conclusão</p>
-                  <p className="text-2xl font-medium text-emerald-600 dark:text-emerald-400">{summary.completionRate}%</p>
+                  <p className="text-2xl font-medium text-emerald-600 dark:text-emerald-400">{completionRate}%</p>
                 </div>
                 <div className="w-px h-12 bg-border" />
                 <div>
                   <p className="text-muted-foreground mb-1">Planos concluídos</p>
-                  <p className="text-2xl font-medium text-foreground">{summary.plansCompleted} / {summary.totalPlans}</p>
+                  <p className="text-2xl font-medium text-foreground">{summary.completedPlans} / {summary.totalPlans}</p>
                 </div>
               </div>
             </div>
@@ -169,11 +191,11 @@ export function DirectionDetail() {
             <p className="text-3xl font-medium text-foreground">{summary.totalPlans}</p>
           </Card>
           <Card className="text-center">
-            <div className="w-8 h-8 rounded-lg mx-auto mb-3 flex items-center justify-center" style={{ background: `${direction.color ?? '#6366f1'}20` }}>
-              <TrendingUp className="w-5 h-5" style={{ color: direction.color ?? '#6366f1' }} />
+            <div className="w-8 h-8 rounded-lg mx-auto mb-3 flex items-center justify-center" style={{ background: `${dirColor}20` }}>
+              <TrendingUp className="w-5 h-5" style={{ color: dirColor }} />
             </div>
             <p className="text-sm text-muted-foreground mb-1">Status</p>
-            <p className="text-3xl font-medium text-foreground">{direction.status === 'ACTIVE' ? 'Ativa' : 'Arquivada'}</p>
+            <p className="text-3xl font-medium text-foreground">{summary.status === 'ACTIVE' ? 'Ativa' : 'Arquivada'}</p>
           </Card>
         </motion.div>
 
@@ -186,13 +208,13 @@ export function DirectionDetail() {
           >
             <Card>
               <h3 className="text-lg font-medium text-foreground mb-6">Evolução Semanal (estimativa)</h3>
-              {summary.totalMinutes > 0 ? (
+              {weeklyData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={260}>
                   <AreaChart data={weeklyData}>
                     <defs>
                       <linearGradient id="colorDir" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={direction.color ?? 'var(--color-primary)'} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={direction.color ?? 'var(--color-primary)'} stopOpacity={0} />
+                        <stop offset="5%" stopColor={dirColor} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={dirColor} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
@@ -206,13 +228,13 @@ export function DirectionDetail() {
                             {...props}
                             title={String(props.label ?? '')}
                             rows={() => [
-                              { label: 'Horas investidas', value: `${p?.value ?? 0}h`, color: direction?.color ?? 'var(--color-primary)' },
+                              { label: 'Horas investidas', value: `${p?.value ?? 0}h`, color: dirColor },
                             ]}
                           />
                         );
                       }}
                     />
-                    <Area type="monotone" dataKey="hours" stroke={direction.color ?? 'var(--color-primary)'} strokeWidth={2} fillOpacity={1} fill="url(#colorDir)" />
+                    <Area type="monotone" dataKey="hours" stroke={dirColor} strokeWidth={2} fillOpacity={1} fill="url(#colorDir)" />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
@@ -224,11 +246,11 @@ export function DirectionDetail() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <Card>
               <h3 className="text-lg font-medium text-foreground mb-4">Planos Recentes</h3>
-              {summary.recentPlans.length === 0 ? (
+              {recentPlans.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Nenhum plano ainda.</p>
               ) : (
                 <div className="space-y-3">
-                  {summary.recentPlans.map((plan) => (
+                  {recentPlans.map((plan) => (
                     <div
                       key={plan.id}
                       className="p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"

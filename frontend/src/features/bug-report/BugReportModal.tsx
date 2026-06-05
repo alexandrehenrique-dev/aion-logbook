@@ -12,11 +12,14 @@ const SEVERITY_LABELS: Record<BugReportSeverity, string> = {
   CRITICAL: 'Crítica',
 };
 
+const TITLE_MIN = 5;
+const DESCRIPTION_MIN = 10;
+
 type BugReportForm = {
   title: string;
   description: string;
   severity: BugReportSeverity;
-  context: string;
+  page: string;
 };
 
 type Props = { onClose: () => void };
@@ -26,17 +29,27 @@ export function BugReportModal({ onClose }: Props) {
     title: '',
     description: '',
     severity: 'MEDIUM',
-    context: window.location.pathname,
+    page: window.location.pathname,
   });
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
 
+  const titleError = form.title.trim().length > 0 && form.title.trim().length < TITLE_MIN;
+  const descriptionError = form.description.trim().length > 0 && form.description.trim().length < DESCRIPTION_MIN;
+  const canSubmit = form.title.trim().length >= TITLE_MIN && form.description.trim().length >= DESCRIPTION_MIN;
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.description.trim()) return;
+    if (!canSubmit) return;
 
     setStatus('submitting');
     try {
-      await bugReportService.create({ ...form, url: window.location.href, timestamp: new Date().toISOString() });
+      await bugReportService.create({
+        title: form.title.trim(),
+        description: form.description.trim(),
+        severity: form.severity,
+        page: form.page,
+        metadata: { url: window.location.href },
+      });
       setStatus('success');
       toast.success('Bug report enviado', 'Obrigado pelo feedback!');
       setTimeout(onClose, 1500);
@@ -85,10 +98,12 @@ export function BugReportModal({ onClose }: Props) {
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                  placeholder="Descreva brevemente o problema"
-                  className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  required
+                  placeholder="Descreva brevemente o problema (mín. 5 caracteres)"
+                  className={`w-full px-3 py-2 rounded-lg bg-muted/50 border text-sm focus:outline-none focus:ring-2 focus:ring-ring ${titleError ? 'border-destructive' : 'border-border'}`}
                 />
+                {titleError && (
+                  <p className="mt-1 text-xs text-destructive">Mínimo de {TITLE_MIN} caracteres.</p>
+                )}
               </div>
 
               <div>
@@ -96,11 +111,13 @@ export function BugReportModal({ onClose }: Props) {
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                  placeholder="O que aconteceu? O que você esperava que acontecesse?"
+                  placeholder="O que aconteceu? O que você esperava que acontecesse? (mín. 10 caracteres)"
                   rows={4}
-                  className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                  required
+                  className={`w-full px-3 py-2 rounded-lg bg-muted/50 border text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none ${descriptionError ? 'border-destructive' : 'border-border'}`}
                 />
+                {descriptionError && (
+                  <p className="mt-1 text-xs text-destructive">Mínimo de {DESCRIPTION_MIN} caracteres.</p>
+                )}
               </div>
 
               <div>
@@ -124,11 +141,11 @@ export function BugReportModal({ onClose }: Props) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Contexto / Tela</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Página</label>
                 <input
                   type="text"
-                  value={form.context}
-                  onChange={(e) => setForm((p) => ({ ...p, context: e.target.value }))}
+                  value={form.page}
+                  onChange={(e) => setForm((p) => ({ ...p, page: e.target.value }))}
                   className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
@@ -147,7 +164,7 @@ export function BugReportModal({ onClose }: Props) {
                 </button>
                 <button
                   type="submit"
-                  disabled={status === 'submitting'}
+                  disabled={status === 'submitting' || !canSubmit}
                   className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {status === 'submitting' ? 'Enviando...' : 'Enviar report'}

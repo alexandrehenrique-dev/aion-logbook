@@ -6,14 +6,15 @@ export type CreateBugReportRequest = {
   title: string;
   description: string;
   severity: BugReportSeverity;
-  context?: string;
-  url?: string;
-  timestamp?: string;
+  page?: string;
+  metadata?: Record<string, unknown>;
 };
 
 export type BugReportResponse = {
   id: string;
-  success: boolean;
+  status: string;
+  telegramSent: boolean;
+  message: string;
 };
 
 export const bugReportService = {

@@ -113,10 +113,17 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
 function ProfileMenu({ onClose, onBugReport }: { onClose: () => void; onBugReport: () => void }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login');
+    } catch {
+      setLoggingOut(false);
+    }
   };
 
   return (

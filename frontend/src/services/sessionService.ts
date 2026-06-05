@@ -7,7 +7,7 @@ export type CreateSessionRequest = {
   directionId?: string;
   startedAt: string;
   finishedAt?: string;
-  durationMinutes: number;
+  actualMinutes: number;
   result?: string;
   notes?: string;
 };

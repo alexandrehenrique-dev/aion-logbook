@@ -63,7 +63,7 @@ export function Sessions() {
         directionId: form.directionId || undefined,
         startedAt: form.startedAt ? new Date(form.startedAt).toISOString() : new Date().toISOString(),
         finishedAt: form.finishedAt ? new Date(form.finishedAt).toISOString() : undefined,
-        durationMinutes: form.durationMinutes,
+        actualMinutes: form.durationMinutes,
         result: form.result || undefined,
         notes: form.notes || undefined,
       };

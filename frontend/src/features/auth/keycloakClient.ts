@@ -61,7 +61,7 @@ export async function getValidToken(): Promise<string | undefined> {
     await kc.updateToken(30);
   } catch {
     // Token inválido ou refresh falhou — sessão encerrada
-    kc.login({ redirectUri: `${window.location.origin}/logbook/` });
+    kc.login({ redirectUri: logbookBaseUrl });
     return undefined;
   }
 

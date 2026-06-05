@@ -19,7 +19,7 @@ import { Card } from '../components/Card';
 import { planService } from '../../services/planService';
 import { directionService } from '../../services/directionService';
 import type { Plan, PlanEvent, Direction } from '../../types';
-import { PLAN_STATUS_LABEL, PRIORITY_LABEL } from '../../types';
+import { PLAN_STATUS_LABEL, PRIORITY_LABEL, getPlanEventLabel } from '../../types';
 import { toast } from '../../utils/toast';
 
 type ActionModal =
@@ -343,8 +343,11 @@ export function PlanDetail() {
                   {events.map((ev) => (
                     <Card key={ev.id} className="py-3">
                       <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{ev.description ?? ev.eventType}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground">{getPlanEventLabel(ev.eventType)}</p>
+                          {ev.eventType === 'NOTE_ADDED' && ev.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 italic">{ev.description}</p>
+                          )}
                           {ev.fromStatus && ev.toStatus && (
                             <p className="text-xs text-muted-foreground mt-0.5">
                               {PLAN_STATUS_LABEL[ev.fromStatus]} → {PLAN_STATUS_LABEL[ev.toStatus]}

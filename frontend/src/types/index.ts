@@ -87,11 +87,44 @@ export type SessionLog = {
   createdAt: string;
 };
 
+export type PlanEventType =
+  | 'CREATED'
+  | 'UPDATED'
+  | 'STARTED'
+  | 'COMPLETED'
+  | 'PARTIAL_COMPLETED'
+  | 'POSTPONED'
+  | 'IGNORED'
+  | 'CANCELED'
+  | 'MISSED'
+  | 'DUE'
+  | 'NOTE_ADDED'
+  | 'MODIFIED';
+
+export const PLAN_EVENT_TYPE_LABEL: Record<PlanEventType, string> = {
+  CREATED: 'Plano criado',
+  UPDATED: 'Plano atualizado',
+  STARTED: 'Plano iniciado',
+  COMPLETED: 'Plano concluído',
+  PARTIAL_COMPLETED: 'Concluído parcialmente',
+  POSTPONED: 'Plano reagendado',
+  IGNORED: 'Pausado por escolha',
+  CANCELED: 'Plano cancelado',
+  MISSED: 'Plano não executado no prazo',
+  DUE: 'Chegou a hora',
+  NOTE_ADDED: 'Observação registrada',
+  MODIFIED: 'Plano modificado',
+};
+
+export function getPlanEventLabel(eventType: string): string {
+  return PLAN_EVENT_TYPE_LABEL[eventType as PlanEventType] ?? eventType;
+}
+
 export type PlanEvent = {
   id: string;
   userId: string;
   planId: string;
-  eventType: string;
+  eventType: PlanEventType | string;
   fromStatus?: PlanStatus;
   toStatus?: PlanStatus;
   description?: string;

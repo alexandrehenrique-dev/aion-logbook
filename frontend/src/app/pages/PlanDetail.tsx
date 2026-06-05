@@ -21,6 +21,7 @@ import { directionService } from '../../services/directionService';
 import type { Plan, PlanEvent, Direction } from '../../types';
 import { PLAN_STATUS_LABEL, PRIORITY_LABEL, getPlanEventLabel } from '../../types';
 import { toast } from '../../utils/toast';
+import { formatDuration } from '../../utils/format';
 
 type ActionModal =
   | 'complete'
@@ -311,7 +312,7 @@ export function PlanDetail() {
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Duração estimada</p>
                     <p className="text-foreground">
-                      {plan.estimatedMinutes ? `${plan.estimatedMinutes}min` : '—'}
+                      {plan.estimatedMinutes ? formatDuration(plan.estimatedMinutes) : '—'}
                     </p>
                   </div>
                   <div>
@@ -324,7 +325,7 @@ export function PlanDetail() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Tempo real</p>
-                    <p className="text-foreground">{plan.actualMinutes ? `${plan.actualMinutes}min` : '—'}</p>
+                    <p className="text-foreground">{plan.actualMinutes ? formatDuration(plan.actualMinutes) : '—'}</p>
                   </div>
                 </div>
                 {plan.reason && (

@@ -8,6 +8,7 @@ import { sessionService } from '../../services/sessionService';
 import { directionService } from '../../services/directionService';
 import type { SessionLog, Direction } from '../../types';
 import type { CreateSessionRequest } from '../../services/sessionService';
+import { formatDuration } from '../../utils/format';
 
 type NewSessionForm = {
   directionId: string;
@@ -27,11 +28,6 @@ const EMPTY_FORM: NewSessionForm = {
   notes: '',
 };
 
-function formatMinutes(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}h ${m > 0 ? `${m}min` : ''}`.trim() : `${m}min`;
-}
 
 export function Sessions() {
   const [sessions, setSessions] = useState<SessionLog[]>([]);
@@ -114,12 +110,12 @@ export function Sessions() {
         >
           <Card className="text-center">
             <p className="text-sm text-muted-foreground mb-1">Hoje</p>
-            <p className="text-3xl font-medium text-foreground">{todayMinutes > 0 ? formatMinutes(todayMinutes) : '—'}</p>
+            <p className="text-3xl font-medium text-foreground">{todayMinutes > 0 ? formatDuration(todayMinutes) : '—'}</p>
             <p className="text-xs text-muted-foreground mt-1">{todaySessions.length} sessões</p>
           </Card>
           <Card className="text-center">
             <p className="text-sm text-muted-foreground mb-1">Total investido</p>
-            <p className="text-3xl font-medium text-foreground">{totalMinutes > 0 ? formatMinutes(totalMinutes) : '—'}</p>
+            <p className="text-3xl font-medium text-foreground">{totalMinutes > 0 ? formatDuration(totalMinutes) : '—'}</p>
           </Card>
           <Card className="text-center">
             <p className="text-sm text-muted-foreground mb-1">Total de sessões</p>
@@ -179,7 +175,7 @@ export function Sessions() {
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-2xl font-medium text-foreground">{formatMinutes(session.durationMinutes)}</p>
+                          <p className="text-2xl font-medium text-foreground">{formatDuration(session.durationMinutes)}</p>
                         </div>
                       </div>
                     </Card>

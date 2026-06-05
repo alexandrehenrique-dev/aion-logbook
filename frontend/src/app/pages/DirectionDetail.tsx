@@ -1,4 +1,5 @@
 import { ArrowLeft, Clock, Loader2, TrendingUp } from 'lucide-react';
+import { formatNumber } from '../../utils/format';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
@@ -104,7 +105,7 @@ export function DirectionDetail() {
   }
 
   const dirColor = summary.color ?? '#6366f1';
-  const totalHours = (summary.totalSessionMinutes / 60).toFixed(1);
+  const totalHours = formatNumber(summary.totalSessionMinutes / 60);
   const completionRate = summary.totalPlans > 0
     ? Math.round(summary.completedPlans / summary.totalPlans * 100)
     : 0;

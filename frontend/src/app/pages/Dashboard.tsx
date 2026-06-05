@@ -8,6 +8,7 @@ import {
   TrendingUp,
   XCircle,
 } from 'lucide-react';
+import { formatPercentage, formatDuration } from '../../utils/format';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -312,13 +313,13 @@ export function Dashboard() {
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-muted-foreground">Energia investida</span>
                   <span className="text-sm font-medium text-foreground">
-                    {Math.floor(data.totalEnergyMinutes / 60)}h{data.totalEnergyMinutes % 60}min
+                    {formatDuration(data.totalEnergyMinutes)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-muted-foreground">Taxa de conclusão</span>
                   <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    {data.completionRate}%
+                    {formatPercentage(data.completionRate)}
                   </span>
                 </div>
               </div>

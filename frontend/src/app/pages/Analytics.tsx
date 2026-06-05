@@ -11,6 +11,7 @@ import { analyticsService } from '../../services/analyticsService';
 import type { AnalyticsOverview, AnalyticsByDay, AnalyticsStatusDistribution, AnalyticsTimeByDirection } from '../../types';
 import type { AnalyticsPlannedVsExecuted } from '../../services/analyticsService';
 import { PLAN_STATUS_LABEL } from '../../types';
+import { formatNumber, formatPercentage, formatDuration } from '../../utils/format';
 
 type Filter = '7d' | '30d' | 'month' | 'prev-month';
 
@@ -20,12 +21,6 @@ const FILTER_LABELS: Record<Filter, string> = {
   month: 'Este mês',
   'prev-month': 'Mês anterior',
 };
-
-function formatMinutes(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}h${m > 0 ? ` ${m}min` : ''}` : `${m}min`;
-}
 
 function getDateRange(filter: Filter): { dateFrom: string; dateTo: string } {
   const now = new Date();
@@ -158,15 +153,15 @@ export function Analytics() {
           <Card className="text-center">
             <Clock className="w-8 h-8 text-primary mx-auto mb-3" />
             <p className="text-sm text-muted-foreground mb-1">Energia Investida</p>
-            <p className="text-3xl font-medium text-foreground">{formatMinutes(overview.totalTimeMinutes)}</p>
+            <p className="text-3xl font-medium text-foreground">{formatDuration(overview.totalTimeMinutes)}</p>
             {overview.weeklyTimeMinutes && (
-              <p className="text-xs text-muted-foreground mt-2">Esta semana: {formatMinutes(overview.weeklyTimeMinutes)}</p>
+              <p className="text-xs text-muted-foreground mt-2">Esta semana: {formatDuration(overview.weeklyTimeMinutes)}</p>
             )}
           </Card>
           <Card className="text-center">
             <TrendingUp className="w-8 h-8 text-accent mx-auto mb-3" />
             <p className="text-sm text-muted-foreground mb-1">Taxa de Conclusão</p>
-            <p className="text-3xl font-medium text-foreground">{overview.completionRate}%</p>
+            <p className="text-3xl font-medium text-foreground">{formatPercentage(overview.completionRate)}</p>
           </Card>
           <Card className="text-center">
             <Calendar className="w-8 h-8 text-secondary mx-auto mb-3" />
@@ -202,8 +197,8 @@ export function Analytics() {
                             ? new Date(((props.payload?.[0]?.payload as AnalyticsByDay).date ?? '') + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
                             : String(props.label ?? '')}
                           rows={(payload) => [
-                            { label: 'Planejados', value: String(payload[0]?.planned ?? 0), color: 'var(--color-muted-foreground)' },
-                            { label: 'Executados', value: String(payload[0]?.executed ?? 0), color: 'var(--color-primary)' },
+                            { label: 'Planejados', value: String((payload[0] as { value?: number })?.value ?? 0), color: 'var(--color-muted-foreground)' },
+                            { label: 'Executados', value: String((payload[1] as { value?: number })?.value ?? 0), color: 'var(--color-primary)' },
                           ]}
                         />
                       )}
@@ -240,9 +235,9 @@ export function Analytics() {
                             {...props}
                             title={String(props.label ?? '')}
                             rows={() => [
-                              { label: 'Planejado', value: formatMinutes(planned), color: 'var(--color-muted-foreground)' },
-                              { label: 'Executado', value: formatMinutes(executed), color: 'var(--color-primary)' },
-                              { label: 'Diferença', value: `${diff >= 0 ? '+' : ''}${formatMinutes(Math.abs(diff))}` },
+                              { label: 'Planejado', value: formatDuration(planned), color: 'var(--color-muted-foreground)' },
+                              { label: 'Executado', value: formatDuration(executed), color: 'var(--color-primary)' },
+                              { label: 'Diferença', value: `${diff >= 0 ? '+' : ''}${formatDuration(Math.abs(diff))}` },
                             ]}
                           />
                         );
@@ -277,14 +272,14 @@ export function Analytics() {
                         if (!entry) return null;
                         const total = dirChartData.reduce((s, d) => s + d.value, 0);
                         const value = Number(entry.value ?? 0);
-                        const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                        const pct = total > 0 ? formatPercentage((value / total) * 100) : '0%';
                         return (
                           <ChartTooltip
                             {...props}
                             title={String(entry.name ?? '')}
                             rows={() => [
-                              { label: 'Horas investidas', value: `${value}h`, color: entry.payload?.color as string },
-                              { label: 'Percentual', value: `${pct}%` },
+                              { label: 'Horas investidas', value: `${formatNumber(value)}h`, color: entry.payload?.color as string },
+                              { label: 'Percentual', value: pct },
                             ]}
                           />
                         );
@@ -306,12 +301,12 @@ export function Analytics() {
                 <div className="space-y-4">
                   {statusDist.map((item, index) => {
                     const total = statusDist.reduce((sum, s) => sum + s.count, 0);
-                    const pct = item.percentage ?? Math.round((item.count / total) * 100);
+                    const pct = item.percentage != null ? item.percentage : (item.count / total) * 100;
                     return (
                       <motion.div key={item.status} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.55 + index * 0.05 }}>
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-sm text-foreground">{PLAN_STATUS_LABEL[item.status]}</span>
-                          <span className="text-sm font-medium text-muted-foreground">{item.count} ({pct}%)</span>
+                          <span className="text-sm font-medium text-muted-foreground">{item.count} ({formatPercentage(pct)})</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
                           <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, delay: 0.55 + index * 0.05 }} className="h-full bg-primary" />

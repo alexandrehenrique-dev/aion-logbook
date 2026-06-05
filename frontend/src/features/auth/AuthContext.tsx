@@ -70,8 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (stored) {
       try {
         setState({ status: 'authenticated', user: JSON.parse(stored) as AuthUser });
-      } catch (error) {
-        console.error('[AION_KEYCLOAK_INIT_ERROR]', error);
+      } catch {
         setState({ status: 'unauthenticated' });
       }
     } else {

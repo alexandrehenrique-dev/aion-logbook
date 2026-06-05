@@ -36,7 +36,16 @@ public class SecurityConfig {
             "/*.svg",
             "/*.webp",
             "/*.woff",
-            "/*.woff2"
+            "/*.woff2",
+            "/logbook/assets/**",
+            "/logbook/*.js",
+            "/logbook/*.css",
+            "/logbook/*.ico",
+            "/logbook/*.svg",
+            "/logbook/*.png",
+            "/logbook/*.webp",
+            "/logbook/*.woff",
+            "/logbook/*.woff2"
     };
 
     private static final String[] PUBLIC_ACTUATOR_ROUTES = {

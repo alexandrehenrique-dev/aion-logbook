@@ -20,12 +20,7 @@ function getInstance(): Keycloak {
 // Promise singleton: seguro chamar múltiplas vezes (React StrictMode).
 export function initKeycloak(): Promise<boolean> {
   const kc = getInstance();
-  console.info('[AION_KEYCLOAK_CONFIG]', {
-    pkceEnabled: env.keycloakPkceEnabled,
-    secureContext: window.isSecureContext,
-    hasCrypto: typeof window.crypto !== 'undefined',
-    hasSubtle: typeof window.crypto?.subtle !== 'undefined',
-  });
+
   if (!_initPromise) {
     _initPromise = kc.init({
       onLoad: 'check-sso',

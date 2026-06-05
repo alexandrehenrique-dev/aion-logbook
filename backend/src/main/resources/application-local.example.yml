@@ -35,7 +35,11 @@ app:
   security:
     enabled: true
   cors:
-    allowed-origins: http://localhost:5173,http://localhost:3000
+    allowed-origins: http://localhost:5173,http://localhost:3000,http://localhost:8080
+  # URL do servidor de desenvolvimento Vite. Usado pelo LocalDevSpaController para redirecionar
+  # quem acessa localhost:8080 por engano. O default (localhost:5173) é o padrão do Vite.
+  frontend:
+    dev-server: http://localhost:5173
   telegram:
     bug-report:
       enabled: ${TELEGRAM_ENABLED:false}

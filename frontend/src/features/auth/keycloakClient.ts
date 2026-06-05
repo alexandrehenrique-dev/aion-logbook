@@ -37,7 +37,7 @@ export async function keycloakLogin(): Promise<void> {
   const kc = getInstance();
 
   const loginUrl = await kc.createLoginUrl({
-    redirectUri: `${window.location.origin}/logbook/`,
+    redirectUri: logbookBaseUrl,
   });
 
   console.info('[AION_KEYCLOAK_LOGIN_URL]', loginUrl);

@@ -1,8 +1,10 @@
 package br.com.byop.aionlogbook.shared.web;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
+@Profile("!local")
 @Controller
 public class SpaController {
 

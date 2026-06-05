@@ -93,6 +93,18 @@ class NotificationServiceTest {
     }
 
     @Test
+    void deleteReminderForPlanDelegatesToRepository() {
+        var planId = UUID.randomUUID();
+        var userId = UUID.randomUUID();
+
+        service.deleteReminderForPlan(planId, userId);
+
+        verify(notificationRepository).deleteByUserIdAndRelatedEntityIdAndType(
+                userId, planId, NotificationService.TYPE_PLAN_REMINDER
+        );
+    }
+
+    @Test
     void createPlanReminderSavesCorrectFields() {
         var plan = plan();
         service.createPlanReminder(plan, NOW);

@@ -2,6 +2,7 @@ package br.com.byop.aionlogbook.plan.application;
 
 import br.com.byop.aionlogbook.direction.domain.DirectionStatus;
 import br.com.byop.aionlogbook.direction.infrastructure.DirectionRepository;
+import br.com.byop.aionlogbook.notification.application.NotificationService;
 import br.com.byop.aionlogbook.plan.domain.Plan;
 import br.com.byop.aionlogbook.plan.domain.PlanEvent;
 import br.com.byop.aionlogbook.plan.domain.PlanEventType;
@@ -35,6 +36,7 @@ class UpdatePlanUseCaseTest {
     private final PlanRepository planRepository = mock(PlanRepository.class);
     private final PlanEventRepository planEventRepository = mock(PlanEventRepository.class);
     private final DirectionRepository directionRepository = mock(DirectionRepository.class);
+    private final NotificationService notificationService = mock(NotificationService.class);
     private final PlanMapper planMapper = new PlanMapper();
 
     private final UpdatePlanUseCase useCase = new UpdatePlanUseCase(
@@ -42,6 +44,7 @@ class UpdatePlanUseCaseTest {
             planEventRepository,
             directionRepository,
             planMapper,
+            notificationService,
             Clock.fixed(NOW, ZONE)
     );
 
@@ -221,6 +224,57 @@ class UpdatePlanUseCaseTest {
 
         verify(planRepository, never()).save(any());
         verify(planEventRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldDeleteReminderAndEmitRescheduledEventWhenPlannedStartAtChanges() {
+        var userId = UUID.randomUUID();
+        var planId = UUID.randomUUID();
+        var plan = plan(userId, planId);
+        var originalStart = Instant.parse("2026-06-04T15:30:00Z");
+        plan.setPlannedStartAt(originalStart);
+
+        var newStart = Instant.parse("2026-06-04T17:30:00Z");
+        var request = new UpdatePlanRequest(
+                null, null, null, null, null, null,
+                newStart,
+                null, null, null, null, null
+        );
+
+        when(planRepository.findByIdAndUserId(planId, userId)).thenReturn(Optional.of(plan));
+        when(planRepository.save(any(Plan.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        useCase.execute(userId, planId, request);
+
+        verify(notificationService).deleteReminderForPlan(planId, userId);
+
+        var eventCaptor = ArgumentCaptor.forClass(PlanEvent.class);
+        verify(planEventRepository).save(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getEventType()).isEqualTo(PlanEventType.RESCHEDULED);
+    }
+
+    @Test
+    void shouldNotDeleteReminderWhenPlannedStartAtDoesNotChange() {
+        var userId = UUID.randomUUID();
+        var planId = UUID.randomUUID();
+        var plan = plan(userId, planId);
+
+        var request = new UpdatePlanRequest(
+                null, "Novo título", null, null, null, null,
+                null,
+                null, null, null, null, null
+        );
+
+        when(planRepository.findByIdAndUserId(planId, userId)).thenReturn(Optional.of(plan));
+        when(planRepository.save(any(Plan.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        useCase.execute(userId, planId, request);
+
+        verify(notificationService, never()).deleteReminderForPlan(any(), any());
+
+        var eventCaptor = ArgumentCaptor.forClass(PlanEvent.class);
+        verify(planEventRepository).save(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getEventType()).isEqualTo(PlanEventType.UPDATED);
     }
 
     @Test

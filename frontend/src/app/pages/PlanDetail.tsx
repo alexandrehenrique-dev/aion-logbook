@@ -124,18 +124,29 @@ export function PlanDetail() {
     if (!id || !plan) return;
     setSubmitting(true);
     try {
+      const originalTime = plan.plannedStartAt
+        ? new Date(plan.plannedStartAt).toTimeString().slice(0, 5)
+        : '';
+      const newPlannedStartAt = modDate && modTime
+        ? `${modDate}T${modTime}:00${localTimezoneOffset()}`
+        : undefined;
+      const wasRescheduled = !!(newPlannedStartAt && (
+        modDate !== plan.plannedDate ||
+        modTime !== originalTime
+      ));
+
       await planService.modify(id, {
         title: modTitle || plan.title,
         description: modDescription || undefined,
         priority: (modPriority || plan.priority) as Plan['priority'],
         plannedDate: modDate || undefined,
-        plannedStartAt: modDate && modTime ? `${modDate}T${modTime}:00${localTimezoneOffset()}` : undefined,
+        plannedStartAt: newPlannedStartAt,
         estimatedMinutes: modMinutes ? Number(modMinutes) : undefined,
         notificationEnabled: modDate && modTime ? true : undefined,
       });
       closeModal();
       await reload();
-      toast.success('Plano atualizado com sucesso.');
+      toast.success(wasRescheduled ? 'Plano reagendado com sucesso.' : 'Plano atualizado com sucesso.');
     } catch (e: unknown) {
       const msg = (e as { body?: { error?: string } })?.body?.error ?? 'Não foi possível atualizar o plano.';
       toast.error('Algo não saiu como esperado.', msg);

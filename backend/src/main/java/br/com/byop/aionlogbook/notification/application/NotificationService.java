@@ -51,6 +51,11 @@ public class NotificationService {
     }
 
     @Transactional
+    public void deleteReminderForPlan(UUID planId, UUID userId) {
+        notificationRepository.deleteByUserIdAndRelatedEntityIdAndType(userId, planId, TYPE_PLAN_REMINDER);
+    }
+
+    @Transactional
     public void createPlanReminder(Plan plan, Instant now) {
         var notification = new Notification();
         notification.setUserId(plan.getUserId());

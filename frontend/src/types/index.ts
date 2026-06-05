@@ -90,6 +90,7 @@ export type SessionLog = {
 export type PlanEventType =
   | 'CREATED'
   | 'UPDATED'
+  | 'RESCHEDULED'
   | 'STARTED'
   | 'COMPLETED'
   | 'PARTIAL_COMPLETED'
@@ -104,6 +105,7 @@ export type PlanEventType =
 export const PLAN_EVENT_TYPE_LABEL: Record<PlanEventType, string> = {
   CREATED: 'Plano criado',
   UPDATED: 'Plano atualizado',
+  RESCHEDULED: 'Plano reagendado',
   STARTED: 'Plano iniciado',
   COMPLETED: 'Plano concluído',
   PARTIAL_COMPLETED: 'Concluído parcialmente',

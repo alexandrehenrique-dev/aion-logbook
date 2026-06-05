@@ -33,7 +33,6 @@ services:
       KC_HOSTNAME_STRICT: "false"
       KC_PROXY_HEADERS: xforwarded
       KC_HOSTNAME: https://192.168.0.77
-      KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
     ports:
       - "${KEYCLOAK_PORT:-8181}:8080"

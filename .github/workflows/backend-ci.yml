@@ -41,7 +41,7 @@ jobs:
       - name: Executar deploy
         run: |
           cd "$DEPLOY_PATH"
-          ./deploy.sh "$DEPLOY_BRANCH"
+          ./deploy.sh prod "$DEPLOY_BRANCH"
 
       - name: Validar aplicação via HTTPS
         run: |

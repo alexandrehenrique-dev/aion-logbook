@@ -371,24 +371,9 @@ export function Plans() {
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">Horário</label>
                     <input
-                      type="text"
+                      type="time"
                       value={form.plannedStartAt}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/[^0-9:]/g, '');
-                        setForm((p) => ({ ...p, plannedStartAt: v }));
-                      }}
-                      onBlur={(e) => {
-                        const v = e.target.value;
-                        if (!v) return;
-                        const match = v.match(/^(\d{1,2}):?(\d{2})$/);
-                        if (match) {
-                          const h = match[1].padStart(2, '0');
-                          const m = match[2];
-                          setForm((p) => ({ ...p, plannedStartAt: `${h}:${m}` }));
-                        }
-                      }}
-                      placeholder="18:30"
-                      maxLength={5}
+                      onChange={(e) => setForm((p) => ({ ...p, plannedStartAt: e.target.value }))}
                       className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>

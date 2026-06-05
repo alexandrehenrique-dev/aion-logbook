@@ -11,15 +11,15 @@ class ApiError extends Error {
   }
 }
 
-let _tokenGetter: (() => string | undefined) | null = null;
+let _tokenGetter: (() => Promise<string | undefined> | string | undefined) | null = null;
 
-export function registerTokenGetter(fn: () => string | undefined): void {
+export function registerTokenGetter(fn: () => Promise<string | undefined> | string | undefined): void {
   _tokenGetter = fn;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${env.apiBaseUrl}${path}`;
-  const token = _tokenGetter?.();
+  const token = _tokenGetter ? await Promise.resolve(_tokenGetter()) : undefined;
 
   const response = await fetch(url, {
     headers: {

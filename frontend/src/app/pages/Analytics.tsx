@@ -61,9 +61,12 @@ export function Analytics() {
   const [timeByDir, setTimeByDir] = useState<AnalyticsTimeByDirection[]>([]);
   const [plannedVsExec, setPlannedVsExec] = useState<AnalyticsPlannedVsExecuted[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     const range = getDateRange(filter);
     Promise.all([
       analyticsService.getOverview(range),
@@ -79,10 +82,11 @@ export function Analytics() {
         setTimeByDir(tbd);
         setPlannedVsExec(pve);
       })
+      .catch(() => setError('Não foi possível carregar os dados de analytics.'))
       .finally(() => setLoading(false));
-  }, [filter]);
+  }, [filter, retryKey]);
 
-  if (loading || !overview) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background py-8 px-6">
         <div className="max-w-7xl mx-auto space-y-6">
@@ -93,6 +97,22 @@ export function Analytics() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {[1, 2].map((i) => <div key={i} className="h-72 bg-muted rounded-xl animate-pulse" />)}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !overview) {
+    return (
+      <div className="min-h-screen bg-background py-8 px-6 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <p className="text-muted-foreground">{error ?? 'Nenhum dado disponível.'}</p>
+          <button
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="text-sm text-primary underline"
+          >
+            Tentar novamente
+          </button>
         </div>
       </div>
     );

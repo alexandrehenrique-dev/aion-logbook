@@ -11,7 +11,7 @@ import { authService } from '../../services/authService';
 import { isMockAuthMode, isKeycloakAuthMode } from '../../config/env';
 import type { AuthUser } from '../../types';
 import {
-  getKeycloakToken,
+  getValidToken,
   initKeycloak,
   keycloakLogin,
   keycloakLogout,
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       initKeycloak()
         .then((authenticated) => {
           if (authenticated) {
-            registerTokenGetter(getKeycloakToken);
+            registerTokenGetter(getValidToken);
             setState({ status: 'authenticated', user: mapKeycloakUser() });
           } else {
             setState({ status: 'unauthenticated' });

@@ -50,6 +50,23 @@ export function keycloakLogout(): Promise<void> {
   });
 }
 
+// Retorna token válido, renovando-o se expirar em menos de 30s.
+// updateToken(-1) força refresh imediato se o token já expirou.
+export async function getValidToken(): Promise<string | undefined> {
+  const kc = _keycloak;
+  if (!kc?.authenticated) return undefined;
+
+  try {
+    await kc.updateToken(30);
+  } catch {
+    // Token inválido ou refresh falhou — sessão encerrada
+    kc.login({ redirectUri: `${window.location.origin}/logbook/` });
+    return undefined;
+  }
+
+  return kc.token;
+}
+
 export function getKeycloakToken(): string | undefined {
   return _keycloak?.token;
 }

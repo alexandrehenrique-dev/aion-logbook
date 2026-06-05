@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/Button';
 import { onboardingService } from '../../services/onboardingService';
+import { isMockMode } from '../../config/env';
 
 const SUGGESTED_DIRECTIONS = [
   { id: 'studies', label: 'Estudos', name: 'Estudos', description: 'Crescimento intelectual e aprendizado contínuo', color: '#6366f1', icon: 'book', component: Book },
@@ -19,6 +20,7 @@ export function Onboarding() {
   const [step, setStep] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const toggleDirection = (id: string) => {
     setSelectedIds((prev) =>
@@ -34,6 +36,7 @@ export function Onboarding() {
 
     // Final step: call HTTP onboarding service
     setSubmitting(true);
+    setSubmitError(null);
     try {
       const selectedDirections = SUGGESTED_DIRECTIONS
         .filter((d) => selectedIds.includes(d.id))
@@ -45,8 +48,11 @@ export function Onboarding() {
       await onboardingService.complete();
       navigate('/dashboard');
     } catch {
-      // On error, proceed anyway in mock mode
-      navigate('/dashboard');
+      if (isMockMode) {
+        navigate('/dashboard');
+      } else {
+        setSubmitError('Erro ao salvar. Verifique sua conexão e tente novamente.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -170,9 +176,14 @@ export function Onboarding() {
               Voltar
             </Button>
           )}
-          <Button onClick={handleNext} disabled={submitting}>
-            {submitting ? 'Salvando...' : step === 4 ? 'Começar jornada' : 'Continuar'}
-          </Button>
+          <div className="flex flex-col items-center gap-2">
+            {submitError && (
+              <p className="text-sm text-destructive">{submitError}</p>
+            )}
+            <Button onClick={handleNext} disabled={submitting}>
+              {submitting ? 'Salvando...' : step === 4 ? 'Começar jornada' : 'Continuar'}
+            </Button>
+          </div>
         </motion.div>
       </div>
     </div>

@@ -42,6 +42,7 @@ vite.config.*.mjs.timestamp-*
 .env.*
 !.env.example
 !.env.local.example
+!.env.prod.example
 
 # Backend / Java / Maven
 backend/target/

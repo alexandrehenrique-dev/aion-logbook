@@ -23,7 +23,7 @@ export function initKeycloak(): Promise<boolean> {
 
   if (!_initPromise) {
     _initPromise = kc.init({
-      pkceMethod: 'S256',
+      pkceMethod: env.keycloakPkceEnabled ? 'S256' : false,
       onLoad: 'check-sso',
       checkLoginIframe: false,
     });

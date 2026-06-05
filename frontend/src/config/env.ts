@@ -9,6 +9,7 @@ export const env = {
   // Módulo de notificações ainda não implementado no backend.
   // Manter false até GET /api/v1/notifications existir.
   enableNotifications: import.meta.env.VITE_ENABLE_NOTIFICATIONS === 'true',
+  keycloakPkceEnabled: import.meta.env.VITE_KEYCLOAK_PKCE_ENABLED !== 'false',
 } as const;
 
 export const isMockMode = env.apiMode === 'mock';

@@ -47,6 +47,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        VITE_KEYCLOAK_PKCE_ENABLED: "false"
         VITE_BASE_PATH: /logbook/
         VITE_API_MODE: real
         VITE_API_BASE_URL: /logbook/api/v1

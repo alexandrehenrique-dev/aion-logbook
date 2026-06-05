@@ -32,10 +32,16 @@ export function initKeycloak(): Promise<boolean> {
   return _initPromise;
 }
 
-export function keycloakLogin(): Promise<void> {
-  return getInstance().login({
+export async function keycloakLogin(): Promise<void> {
+  const kc = getInstance();
+
+  const loginUrl = await kc.createLoginUrl({
     redirectUri: `${window.location.origin}/logbook/`,
   });
+
+  console.info('[AION_KEYCLOAK_LOGIN_URL]', loginUrl);
+
+  window.location.assign(loginUrl);
 }
 
 export function keycloakLogout(): Promise<void> {

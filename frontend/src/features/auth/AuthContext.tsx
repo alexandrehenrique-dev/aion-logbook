@@ -61,7 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setState({ status: 'unauthenticated' });
           }
         })
-        .catch(() => setState({ status: 'unauthenticated' }));
+        .catch((error) => {
+          console.error('[AION_KEYCLOAK_INIT_ERROR]', error);
+          setState({ status: 'unauthenticated' });
+        });
       return;
     }
 

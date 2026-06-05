@@ -38,7 +38,8 @@ export function Login() {
       await login();
       // Em modo mock: login() completa aqui e o useEffect acima redireciona.
       // Em modo keycloak: login() redireciona o browser — nunca chega aqui.
-    }  catch {
+    }  catch (error) {
+      console.error('[AION_LOGIN_ERROR]', error);
       setError('Não foi possível entrar. Tente novamente.');
       setIsEntering(false);
     }

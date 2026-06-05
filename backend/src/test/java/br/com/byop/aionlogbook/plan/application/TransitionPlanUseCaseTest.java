@@ -316,7 +316,7 @@ class TransitionPlanUseCaseTest {
             when(planRepository.findByIdAndUserId(planId, userId)).thenReturn(Optional.of(plan));
             when(planRepository.save(plan)).thenReturn(plan);
 
-            useCase.postpone(userId, planId, new PostponePlanRequest(newStart, 45, "Need more time"));
+            useCase.postpone(userId, planId, new PostponePlanRequest(null, newStart, 45, "Need more time"));
 
             assertThat(plan.getStatus()).isEqualTo(PlanStatus.POSTPONED);
             assertThat(plan.getPlannedStartAt()).isEqualTo(newStart);

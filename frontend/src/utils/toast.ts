@@ -14,6 +14,6 @@ export const toast = {
 
   notify(title: string, body?: string, onClick?: () => void) {
     sonnerToast(title, { description: body });
-    browserNotificationService.notify(title, { body, onClick });
+    browserNotificationService.notify(title, { body, onClick, alwaysFire: true });
   },
 };

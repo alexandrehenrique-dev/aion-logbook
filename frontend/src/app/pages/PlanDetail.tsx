@@ -35,6 +35,13 @@ type ActionModal =
 
 const TERMINAL = new Set(['COMPLETED', 'PARTIAL', 'CANCELED', 'IGNORED', 'MISSED']);
 
+function localTimezoneOffset(): string {
+  const offset = new Date().getTimezoneOffset();
+  const sign = offset <= 0 ? '+' : '-';
+  const abs = Math.abs(offset);
+  return `${sign}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
+}
+
 export function PlanDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -122,8 +129,9 @@ export function PlanDetail() {
         description: modDescription || undefined,
         priority: (modPriority || plan.priority) as Plan['priority'],
         plannedDate: modDate || undefined,
-        plannedStartAt: modDate && modTime ? `${modDate}T${modTime}:00Z` : undefined,
+        plannedStartAt: modDate && modTime ? `${modDate}T${modTime}:00${localTimezoneOffset()}` : undefined,
         estimatedMinutes: modMinutes ? Number(modMinutes) : undefined,
+        notificationEnabled: modDate && modTime ? true : undefined,
       });
       closeModal();
       await reload();
@@ -159,7 +167,8 @@ export function PlanDetail() {
           break;
         case 'postpone':
           await planService.postpone(id, {
-            plannedStartAt: `${newDate}T${newTime || '09:00'}:00Z`,
+            plannedDate: newDate,
+            plannedStartAt: `${newDate}T${newTime || '09:00'}:00${localTimezoneOffset()}`,
             reason: reason || undefined,
           });
           break;

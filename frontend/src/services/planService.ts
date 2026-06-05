@@ -26,6 +26,7 @@ export type CreatePlanRequest = {
 export type UpdatePlanRequest = Partial<CreatePlanRequest>;
 
 export type PostponePlanRequest = {
+  plannedDate?: string;
   plannedStartAt: string;
   estimatedMinutes?: number;
   reason?: string;

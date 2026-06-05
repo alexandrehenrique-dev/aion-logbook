@@ -172,6 +172,9 @@ public class TransitionPlanUseCase {
                 request.reason(),
                 now -> {
                     plan.setPlannedStartAt(request.plannedStartAt());
+                    if (request.plannedDate() != null) {
+                        plan.setPlannedDate(request.plannedDate());
+                    }
                     plan.setEstimatedMinutes(request.estimatedMinutes());
 
                     if (request.plannedStartAt() != null && request.estimatedMinutes() != null) {

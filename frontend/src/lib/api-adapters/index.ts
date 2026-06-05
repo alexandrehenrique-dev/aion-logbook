@@ -181,10 +181,12 @@ export function adaptPlan(raw: Record<string, unknown>): Plan {
 export function adaptPostponeRequest(payload: {
   newPlannedStartAt?: string;
   plannedStartAt?: string;
+  plannedDate?: string;
   reason?: string;
   estimatedMinutes?: number;
-}): { plannedStartAt: string; estimatedMinutes?: number; reason?: string } {
+}): { plannedDate?: string; plannedStartAt: string; estimatedMinutes?: number; reason?: string } {
   return {
+    plannedDate: payload.plannedDate,
     plannedStartAt: payload.plannedStartAt ?? payload.newPlannedStartAt ?? '',
     estimatedMinutes: payload.estimatedMinutes,
     reason: payload.reason,

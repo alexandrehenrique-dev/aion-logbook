@@ -144,8 +144,7 @@ public interface PlanRepository extends JpaRepository<Plan, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         select plan from Plan plan
-        where plan.notify = true
-          and plan.plannedStartAt is not null
+        where plan.plannedStartAt is not null
           and plan.status in :statuses
           and (
             (plan.notificationDateTime is not null and plan.notificationDateTime <= :now)

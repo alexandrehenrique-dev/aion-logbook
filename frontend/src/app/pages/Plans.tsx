@@ -115,6 +115,7 @@ export function Plans() {
         plannedDate: form.plannedDate || undefined,
         plannedStartAt: hasTime ? `${form.plannedDate}T${form.plannedStartAt}:00${localTimezoneOffset()}` : undefined,
         estimatedMinutes: form.estimatedMinutes,
+        notificationEnabled: hasTime ? true : undefined,
       });
       setPlans((prev) => [created, ...prev]);
       setShowCreateModal(false);

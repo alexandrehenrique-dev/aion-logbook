@@ -84,10 +84,10 @@ public class DashboardService {
                 PlanStatus.PENDING
         );
 
-        var plansScheduled = planRepository.findTodayByUserIdAndStatus(
+        var plansScheduled = planRepository.findTodayByUserIdAndStatuses(
                 userId,
                 today,
-                PlanStatus.SCHEDULED
+                List.of(PlanStatus.SCHEDULED, PlanStatus.POSTPONED)
         );
 
         Integer totalEnergyMinutes = sessionLogRepository.sumDurationMinutesByUserIdBetween(

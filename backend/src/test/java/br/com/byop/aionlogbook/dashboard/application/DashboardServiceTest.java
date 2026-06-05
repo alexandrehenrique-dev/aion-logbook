@@ -84,8 +84,11 @@ class DashboardServiceTest {
             when(planRepository.findTodayByUserIdAndStatus(userId, LocalDate.of(2026, 6, 4), PlanStatus.PENDING))
                     .thenReturn(List.of(pendingPlan));
 
-            when(planRepository.findTodayByUserIdAndStatus(userId, LocalDate.of(2026, 6, 4), PlanStatus.SCHEDULED))
-                    .thenReturn(List.of());
+            when(planRepository.findTodayByUserIdAndStatuses(
+                    userId,
+                    LocalDate.of(2026, 6, 4),
+                    List.of(PlanStatus.SCHEDULED, PlanStatus.POSTPONED)
+            )).thenReturn(List.of());
 
             when(sessionLogRepository.sumDurationMinutesByUserIdBetween(
                     userId,
@@ -118,7 +121,11 @@ class DashboardServiceTest {
             verify(planRepository).findTodayByUserIdAndStatus(userId, LocalDate.of(2026, 6, 4), PlanStatus.DUE);
             verify(planRepository).findTodayByUserIdAndStatus(userId, LocalDate.of(2026, 6, 4), PlanStatus.MISSED);
             verify(planRepository).findTodayByUserIdAndStatus(userId, LocalDate.of(2026, 6, 4), PlanStatus.PENDING);
-            verify(planRepository).findTodayByUserIdAndStatus(userId, LocalDate.of(2026, 6, 4), PlanStatus.SCHEDULED);
+            verify(planRepository).findTodayByUserIdAndStatuses(
+                    userId,
+                    LocalDate.of(2026, 6, 4),
+                    List.of(PlanStatus.SCHEDULED, PlanStatus.POSTPONED)
+            );
             verify(directionRepository).countByUserProfileIdAndStatus(userId, DirectionStatus.ACTIVE);
             verifyNoMoreInteractions(directionRepository);
         }
@@ -145,8 +152,11 @@ class DashboardServiceTest {
             when(planRepository.findTodayByUserIdAndStatus(userId, LocalDate.of(2026, 6, 4), PlanStatus.PENDING))
                     .thenReturn(List.of());
 
-            when(planRepository.findTodayByUserIdAndStatus(userId, LocalDate.of(2026, 6, 4), PlanStatus.SCHEDULED))
-                    .thenReturn(List.of());
+            when(planRepository.findTodayByUserIdAndStatuses(
+                    userId,
+                    LocalDate.of(2026, 6, 4),
+                    List.of(PlanStatus.SCHEDULED, PlanStatus.POSTPONED)
+            )).thenReturn(List.of());
 
             when(sessionLogRepository.sumDurationMinutesByUserIdBetween(any(), any(), any()))
                     .thenReturn(null);

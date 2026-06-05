@@ -172,6 +172,7 @@ export function Dashboard() {
                           plan.status === 'MISSED' ? 'bg-destructive/50' :
                           plan.status === 'DUE' ? 'bg-amber-500' :
                           plan.status === 'SCHEDULED' ? 'bg-violet-400' :
+                          plan.status === 'POSTPONED' ? 'bg-violet-300' :
                           plan.status === 'PENDING' ? 'bg-muted-foreground/30' : 'bg-border'
                         }`}
                       />
@@ -189,6 +190,7 @@ export function Dashboard() {
                       {plan.status === 'MISSED' && <XCircle className="w-5 h-5 text-destructive/50 shrink-0 mt-0.5" />}
                       {plan.status === 'DUE' && <Bell className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />}
                       {plan.status === 'SCHEDULED' && <CalendarClock className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />}
+                      {plan.status === 'POSTPONED' && <CalendarClock className="w-5 h-5 text-violet-300 shrink-0 mt-0.5" />}
                       {plan.status === 'PENDING' && <Clock className="w-5 h-5 text-muted-foreground/50 shrink-0 mt-0.5" />}
                     </motion.div>
                   ))}

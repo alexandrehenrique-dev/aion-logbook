@@ -213,7 +213,7 @@ export function PlanDetail() {
 
   const isTerminal = TERMINAL.has(plan.status);
 
-  const canStart = ['PENDING', 'SCHEDULED', 'DUE'].includes(plan.status);
+  const canStart = ['PENDING', 'SCHEDULED', 'DUE', 'POSTPONED'].includes(plan.status);
   const canComplete = ['IN_PROGRESS', 'DUE', 'PENDING'].includes(plan.status);
   const canPartial = ['IN_PROGRESS', 'DUE', 'PENDING', 'MISSED'].includes(plan.status);
   const canPostpone = !isTerminal;

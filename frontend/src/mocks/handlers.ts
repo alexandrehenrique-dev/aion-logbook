@@ -445,7 +445,7 @@ export const handlers = [
     if (dateTo) result = result.filter((p) => (p.plannedDate ?? '') <= dateTo);
     if (status) result = result.filter((p) => p.status === status);
     if (directionId) result = result.filter((p) => p.directionId === directionId);
-    return HttpResponse.json(result);
+    return HttpResponse.json({ content: result, number: 0, size: result.length, totalElements: result.length, totalPages: result.length === 0 ? 0 : 1, first: true, last: true, empty: result.length === 0 });
   }),
   http.get('/api/v1/plans/:id', ({ params }) => {
     const p = plans.find((x) => x.id === params.id);
@@ -615,7 +615,7 @@ export const handlers = [
   // Sessions
   http.get('/api/v1/sessions', async () => {
     await delay(200);
-    return HttpResponse.json(sessions);
+    return HttpResponse.json({ content: sessions, number: 0, size: sessions.length, totalElements: sessions.length, totalPages: sessions.length === 0 ? 0 : 1, first: true, last: true, empty: sessions.length === 0 });
   }),
   http.get('/api/v1/sessions/:id', ({ params }) => {
     const s = sessions.find((x) => x.id === params.id);
@@ -638,7 +638,7 @@ export const handlers = [
   // Logbook
   http.get('/api/v1/logs', async () => {
     await delay(200);
-    return HttpResponse.json(logs);
+    return HttpResponse.json({ content: logs, number: 0, size: logs.length, totalElements: logs.length, totalPages: logs.length === 0 ? 0 : 1, first: true, last: true, empty: logs.length === 0 });
   }),
   http.get('/api/v1/logs/:id', ({ params }) => {
     const l = logs.find((x) => x.id === params.id);

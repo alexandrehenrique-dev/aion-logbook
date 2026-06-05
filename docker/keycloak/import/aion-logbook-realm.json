@@ -22,15 +22,15 @@
         "http://localhost:5173/*",
         "http://localhost:8080/*",
         "https://aion.genesis-lab.dev/*",
-        "http://192.168.0.77/logbook/*",
-        "http://192.168.0.77:8077/logbook/*"
+        "https://192.168.0.77/logbook/*",
+        "https://192.168.0.77:8077/logbook/*"
       ],
       "webOrigins": [
         "http://localhost:5173",
         "http://localhost:8080",
         "https://aion.genesis-lab.dev",
-        "http://192.168.0.77",
-        "http://192.168.0.77:8077"
+        "https://192.168.0.77",
+        "https://192.168.0.77:8077"
       ],
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
@@ -39,7 +39,7 @@
       "frontchannelLogout": true,
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:8080/*##https://aion.genesis-lab.dev/*##http://192.168.0.77/logbook/*##http://192.168.0.77:8077/logbook/*",
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:8080/*##https://aion.genesis-lab.dev/*##https://192.168.0.77/logbook/*##https://192.168.0.77:8077/logbook/*",
         "oauth2.device.authorization.grant.enabled": "false",
         "oidc.ciba.grant.enabled": "false"
       },
@@ -57,8 +57,8 @@
         "offline_access",
         "microprofile-jwt"
       ],
-      "rootUrl": "http://192.168.0.77/logbook/",
-      "baseUrl": "http://192.168.0.77/logbook/",
+      "rootUrl": "https://192.168.0.77/logbook/",
+      "baseUrl": "https://192.168.0.77/logbook/",
       "adminUrl": ""
     }
   ],

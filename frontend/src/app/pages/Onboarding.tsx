@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/Button';
 import { onboardingService } from '../../services/onboardingService';
+import { toast } from '../../utils/toast';
 import { isMockMode } from '../../config/env';
 
 const SUGGESTED_DIRECTIONS = [
@@ -46,6 +47,7 @@ export function Onboarding() {
         await onboardingService.createDirections(selectedDirections);
       }
       await onboardingService.complete();
+      toast.notify('Tudo pronto', 'Seu espaço no Aion foi configurado.');
       navigate('/dashboard');
     } catch {
       if (isMockMode) {

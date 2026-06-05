@@ -24,6 +24,7 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { BugReportModal } from '../../features/bug-report/BugReportModal';
 import { notificationService } from '../../services/notificationService';
 import type { AppNotification } from '../../services/notificationService';
+import { browserNotificationService } from '../../services/browserNotificationService';
 import { searchService } from '../../services/searchService';
 import type { SearchResult } from '../../services/searchService';
 
@@ -273,6 +274,21 @@ export function MainLayout({ children }: { children: ReactNode }) {
     notificationService.list()
       .then((notifs) => setUnreadCount(notifs.filter((n) => n.unread).length))
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const asked = localStorage.getItem('aion-notification-permission-asked');
+    if (!asked && browserNotificationService.isSupported() && Notification.permission === 'default') {
+      const timer = setTimeout(() => {
+        browserNotificationService.requestPermission().then(() => {
+          localStorage.setItem('aion-notification-permission-asked', '1');
+        });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+    if (!asked) {
+      localStorage.setItem('aion-notification-permission-asked', '1');
+    }
   }, []);
 
   // Close dropdowns on outside click

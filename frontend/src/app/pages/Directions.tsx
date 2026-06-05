@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { directionService } from '../../services/directionService';
+import { toast } from '../../utils/toast';
 import type { Direction } from '../../types';
 import type { CreateDirectionRequest } from '../../services/directionService';
 
@@ -62,6 +63,9 @@ export function Directions() {
       setDirections((prev) => [...prev, created]);
       setShowCreateModal(false);
       setForm(EMPTY_FORM);
+      toast.notify('Direção criada', 'Nova direção adicionada.');
+    } catch {
+      toast.error('Não conseguimos criar a direção agora.');
     } finally {
       setSaving(false);
     }

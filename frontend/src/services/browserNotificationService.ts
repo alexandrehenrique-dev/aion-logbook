@@ -14,9 +14,11 @@ export const browserNotificationService = {
     return Notification.requestPermission();
   },
 
-  notify(title: string, options?: NotificationOptions & { onClick?: () => void }): void {
+  notify(title: string, options?: NotificationOptions & { onClick?: () => void; alwaysFire?: boolean }): void {
     if (!this.isSupported() || Notification.permission !== 'granted') return;
-    const { onClick, ...notifOptions } = options ?? {};
+    const tabHidden = typeof document !== 'undefined' && document.hidden;
+    if (!tabHidden && !options?.alwaysFire) return;
+    const { onClick, alwaysFire: _, ...notifOptions } = options ?? {};
     const notif = new Notification(title, {
       icon: '/favicon.svg',
       badge: '/favicon.svg',

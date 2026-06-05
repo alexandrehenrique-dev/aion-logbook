@@ -16,6 +16,7 @@ import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { planService } from '../../services/planService';
 import { directionService } from '../../services/directionService';
+import { toast } from '../../utils/toast';
 import type { Plan, Direction, Priority } from '../../types';
 import { PLAN_STATUS_LABEL, PRIORITY_LABEL } from '../../types';
 import type { PlanStatus } from '../../types';
@@ -118,6 +119,9 @@ export function Plans() {
       setPlans((prev) => [created, ...prev]);
       setShowCreateModal(false);
       setForm(EMPTY_FORM);
+      toast.notify('Plano criado', 'Seu plano foi salvo com sucesso.');
+    } catch {
+      toast.error('Não conseguimos criar o plano agora.');
     } finally {
       setSaving(false);
     }

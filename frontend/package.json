@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:backend": "node scripts/build-for-backend.mjs",
-    "build:backend:local": "VITE_KEYCLOAK_URL=http://localhost:8181 VITE_API_BASE_URL=/api/v1 VITE_BASE_PATH=/ node scripts/build-for-backend.mjs",
+    "build:backend:local": "node scripts/build-for-backend.mjs --mode backend-local",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc -b"

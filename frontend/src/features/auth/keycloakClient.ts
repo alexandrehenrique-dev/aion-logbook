@@ -5,7 +5,13 @@ let _keycloak: Keycloak | null = null;
 let _initPromise: Promise<boolean> | null = null;
 
 // BASE_URL é "/" em dev (Vite default) e "/logbook/" em prod (VITE_BASE_PATH=/logbook/).
+// Sempre termina com "/" (Vite garante), então loginRedirectUri = base + "login" fica correto.
 const logbookBaseUrl = `${window.location.origin}${import.meta.env.BASE_URL}`;
+
+// redirectUri do login aponta para /login (não para a raiz) para evitar que o
+// <Navigate to="/login"> do React Router limpe o hash com o auth code antes de
+// initKeycloak() processar o callback.
+const loginRedirectUri = `${logbookBaseUrl}login`;
 
 function getInstance(): Keycloak {
   if (!_keycloak) {
@@ -37,7 +43,7 @@ export async function keycloakLogin(): Promise<void> {
   const kc = getInstance();
 
   const loginUrl = await kc.createLoginUrl({
-    redirectUri: logbookBaseUrl,
+    redirectUri: loginRedirectUri,
   });
 
   console.info('[AION_KEYCLOAK_LOGIN_URL]', loginUrl);
@@ -61,7 +67,7 @@ export async function getValidToken(): Promise<string | undefined> {
     await kc.updateToken(30);
   } catch {
     // Token inválido ou refresh falhou — sessão encerrada
-    kc.login({ redirectUri: logbookBaseUrl });
+    kc.login({ redirectUri: loginRedirectUri });
     return undefined;
   }
 

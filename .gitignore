@@ -48,6 +48,9 @@ backend/src/main/resources/static/
 !.env.example
 !.env.local.example
 !.env.prod.example
+!frontend/.env.backend
+!frontend/.env.backend-local
+!.env.prod.example
 
 # Backend / Java / Maven
 backend/target/

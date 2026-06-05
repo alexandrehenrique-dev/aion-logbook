@@ -19,10 +19,16 @@ function hasCommand(command) {
 const packageManager = hasCommand('pnpm') ? 'pnpm' : 'npm';
 const viteCommand = packageManager === 'pnpm' ? 'pnpm vite' : 'npx vite';
 
+// Aceita --mode <nome> para trocar o arquivo .env carregado pelo Vite.
+// Exemplo: node build-for-backend.mjs --mode backend-local
+const args = process.argv.slice(2);
+const modeIndex = args.indexOf('--mode');
+const mode = modeIndex !== -1 && args[modeIndex + 1] ? args[modeIndex + 1] : 'backend';
+
 console.log('Building frontend for Spring Boot backend...');
 console.log(`Target: ${staticDir}`);
 console.log(`Package manager: ${packageManager}`);
-console.log('Mode: backend (VITE_API_MODE=real, MSW desabilitado)');
+console.log(`Mode: ${mode} (lê .env.${mode})`);
 
 if (!existsSync(staticDir)) {
   console.log('Creating static directory...');
@@ -36,9 +42,8 @@ if (!existsSync(staticDir)) {
 }
 
 try {
-  // Usar --mode backend para carregar .env.backend (VITE_API_MODE=real sem MSW)
   execSync(
-    `${packageManager} run typecheck && ${viteCommand} build --mode backend --outDir "${staticDir}" --emptyOutDir`,
+    `${packageManager} run typecheck && ${viteCommand} build --mode ${mode} --outDir "${staticDir}" --emptyOutDir`,
     {
       cwd: frontendRoot,
       stdio: 'inherit',

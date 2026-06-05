@@ -69,7 +69,12 @@ services:
       DB_USERNAME: ${POSTGRES_USER:-aion_user}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-aion_password}
 
-      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/aion-logbook
+      # Issuer URI externo: deve bater com o claim 'iss' dos tokens emitidos pelo Keycloak.
+      # KC_HOSTNAME define o issuer como a URL pública; o backend valida contra ela.
+      KEYCLOAK_ISSUER_URI: https://192.168.0.77/realms/aion-logbook
+      # JWK Set URI interno: busca as chaves públicas pelo nome de serviço Docker.
+      # Evita que o backend tente alcançar a URL pública de dentro do container.
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/aion-logbook/protocol/openid-connect/certs
 
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
 

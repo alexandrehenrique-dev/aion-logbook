@@ -5,16 +5,15 @@ aion:
     missed:
       fixed-delay: 300000
 
+keycloak:
+  issuer-uri: http://localhost:8181/realms/aion-logbook
+  # jwk-set-uri assume o default ${keycloak.issuer-uri}/protocol/openid-connect/certs
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/aion_logbook
     username: aion_user
     password: aion_password
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8181/realms/aion-logbook
   flyway:
     enabled: true
 

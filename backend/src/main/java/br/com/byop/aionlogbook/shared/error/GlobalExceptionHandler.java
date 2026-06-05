@@ -118,6 +118,35 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalState(
+            IllegalStateException exception,
+            HttpServletRequest request
+    ) {
+        // Lançada por AuthenticatedUserProvider quando o contexto de segurança não tem JWT.
+        // Retorna 401 para não vazar 500 em falhas de autenticação que chegam até o controller.
+        if (exception.getMessage() != null && exception.getMessage().contains("autenticado")) {
+            log.warn("Contexto de autenticação ausente em {} {}: {}",
+                    request.getMethod(), request.getRequestURI(), exception.getMessage());
+            return buildResponse(
+                    HttpStatus.UNAUTHORIZED,
+                    ErrorCode.INTERNAL_ERROR,
+                    "Autenticação necessária.",
+                    request,
+                    List.of()
+            );
+        }
+        log.error("IllegalStateException não esperada em {} {}",
+                request.getMethod(), request.getRequestURI(), exception);
+        return buildResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ErrorCode.INTERNAL_ERROR,
+                "Erro interno inesperado.",
+                request,
+                List.of()
+        );
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(
             Exception exception,

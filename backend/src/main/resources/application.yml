@@ -1,3 +1,11 @@
+keycloak:
+  issuer-uri: ${KEYCLOAK_ISSUER_URI}
+  # URL interna Docker para buscar JWKs. Em dev local, assume o mesmo host do issuer-uri.
+  # Em Docker, KEYCLOAK_JWK_SET_URI aponta para o service interno (http://keycloak:8080/...)
+  # enquanto KEYCLOAK_ISSUER_URI aponta para a URL pública (https://host/realms/...).
+  # Separar os dois resolve o IllegalStateException de issuer mismatch que vira HTTP 500.
+  jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:${keycloak.issuer-uri}/protocol/openid-connect/certs}
+
 spring:
   application:
     name: aion-logbook-backend
@@ -6,11 +14,6 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI}
   jpa:
     open-in-view: false
     hibernate:

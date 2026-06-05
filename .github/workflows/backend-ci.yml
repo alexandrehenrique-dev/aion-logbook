@@ -1,61 +1,49 @@
-name: Backend — CI Build
+name: Deploy Genesis Lab
 
 on:
-  workflow_run:
-    workflows: ['Backend — Tests']
-    types:
-      - completed
+  push:
     branches:
-      - main
       - develop
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-aion-logbook-genesis-lab
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  build:
-    name: Build frontend + backend + Docker image
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  deploy:
+    name: Deploy Aion Logbook
+    runs-on: [self-hosted, linux, x64, genesis]
+
+    env:
+      DEPLOY_PATH: ${{ vars.AION_DEPLOY_PATH || '/opt/genesis-lab/services/aion-logbook' }}
+      DEPLOY_BRANCH: ${{ vars.AION_DEPLOY_BRANCH || 'develop' }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Mostrar contexto do runner
+        run: |
+          echo "Runner: $RUNNER_NAME"
+          echo "Workspace: $GITHUB_WORKSPACE"
+          whoami
+          pwd
+          docker --version
+          docker compose version
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'maven'
+      - name: Validar diretório de deploy
+        run: |
+          test -d "$DEPLOY_PATH"
+          test -x "$DEPLOY_PATH/deploy.sh"
+          test -d "$DEPLOY_PATH/repo"
 
-      - name: Set up Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+      - name: Executar deploy
+        run: |
+          cd "$DEPLOY_PATH"
+          ./deploy.sh "$DEPLOY_BRANCH"
 
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Build frontend for backend (modo real)
-        working-directory: frontend
-        env:
-          VITE_API_MODE: real
-          VITE_AUTH_MODE: keycloak
-          VITE_KEYCLOAK_ENABLED: 'true'
-        run: npm run build:backend
-
-      - name: Build backend JAR
-        working-directory: backend
-        run: ./mvnw clean package -DskipTests -B --no-transfer-progress
-
-      - name: Validate Docker Compose configuration
-        run: docker compose config
-
-      - name: Build Docker image (sem push)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/keycloak/Dockerfile
-          push: false
-          tags: aion-logbook-keycloak:ci
+      - name: Validar aplicação via HTTPS
+        run: |
+          curl -k --fail --silent --show-error --location --max-time 20 https://192.168.0.77/logbook/ >/dev/null
+          echo "Aion Logbook publicado com sucesso."

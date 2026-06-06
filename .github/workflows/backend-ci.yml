@@ -44,7 +44,7 @@ jobs:
           cd "$DEPLOY_PATH"
           ./deploy.sh prod "$DEPLOY_BRANCH"
 
-      - name: Validar aplicação via HTTPS
+      - name: Validar publicação
         run: |
-          curl -k --fail --silent --show-error --location --max-time 20 https://192.168.0.77/logbook/ >/dev/null
-          echo "Aion Logbook publicado com sucesso."
+          curl -k --fail --silent --show-error --location --max-time 20 "$APP_HEALTHCHECK_URL" >/dev/null
+          echo "Aion Logbook publicado com sucesso em $APP_HEALTHCHECK_URL."

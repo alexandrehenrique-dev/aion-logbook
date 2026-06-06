@@ -1,53 +1,122 @@
 {
-  "clientId": "aion-logbook-web",
-  "name": "Aion Logbook Web",
-  "description": "Public SPA client for Aion Logbook frontend.",
+  "realm": "aion-logbook",
   "enabled": true,
-  "publicClient": true,
-  "protocol": "openid-connect",
-  "clientAuthenticatorType": "client-secret",
-  "redirectUris": [
-    "http://localhost:5173/*",
-    "http://localhost:8080/*",
-    "https://192.168.0.77/logbook/*",
-    "https://192.168.0.77:8077/logbook/*",
-    "https://aion.byop.dev/logbook/*",
-    "https://aion.byop.dev/logbook/login",
-    "https://aion.byop.dev/logbook/login/*"
+  "displayName": "Aion Logbook",
+  "loginTheme": "aion-logbook",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "clients": [
+    {
+      "clientId": "aion-logbook-web",
+      "name": "Aion Logbook Web",
+      "description": "Public SPA client for Aion Logbook frontend.",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:8080/*",
+        "https://192.168.0.77/logbook/*",
+        "https://192.168.0.77:8077/logbook/*",
+        "https://aion.byop.dev/logbook/*",
+        "https://aion.byop.dev/logbook/login",
+        "https://aion.byop.dev/logbook/login/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "https://192.168.0.77",
+        "https://192.168.0.77:8077",
+        "https://aion.byop.dev"
+      ],
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:8080/*##https://192.168.0.77/logbook/*##https://192.168.0.77:8077/logbook/*##https://aion.byop.dev/logbook/*##https://aion.byop.dev/logbook/login",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "oidc.ciba.grant.enabled": "false"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "basic",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ],
+      "rootUrl": "https://aion.byop.dev/logbook/",
+      "baseUrl": "https://aion.byop.dev/logbook/",
+      "adminUrl": ""
+    }
   ],
-  "webOrigins": [
-    "http://localhost:5173",
-    "http://localhost:8080",
-    "https://192.168.0.77",
-    "https://192.168.0.77:8077",
-    "https://aion.byop.dev"
-  ],
-  "standardFlowEnabled": true,
-  "implicitFlowEnabled": false,
-  "directAccessGrantsEnabled": false,
-  "serviceAccountsEnabled": false,
-  "frontchannelLogout": true,
-  "attributes": {
-    "pkce.code.challenge.method": "S256",
-    "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:8080/*##https://192.168.0.77/logbook/*##https://192.168.0.77:8077/logbook/*##https://aion.byop.dev/logbook/*##https://aion.byop.dev/logbook/login",
-    "oauth2.device.authorization.grant.enabled": "false",
-    "oidc.ciba.grant.enabled": "false"
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "Default authenticated user role for Aion Logbook."
+      }
+    ]
   },
-  "defaultClientScopes": [
-    "web-origins",
-    "acr",
-    "basic",
-    "profile",
-    "roles",
-    "email"
+  "identityProviders": [
+    {
+      "alias": "google",
+      "displayName": "Google",
+      "providerId": "google",
+      "enabled": true,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "",
+        "clientSecret": "",
+        "defaultScope": "openid profile email",
+        "hostedDomain": "",
+        "useJwksUrl": "true",
+        "syncMode": "IMPORT"
+      }
+    },
+    {
+      "alias": "microsoft",
+      "displayName": "Microsoft",
+      "providerId": "microsoft",
+      "enabled": true,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": false,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "",
+        "clientSecret": "",
+        "tenantId": "common",
+        "defaultScope": "openid profile email",
+        "useJwksUrl": "true",
+        "syncMode": "IMPORT"
+      }
+    }
   ],
-  "optionalClientScopes": [
-    "address",
-    "phone",
-    "offline_access",
-    "microprofile-jwt"
-  ],
-  "rootUrl": "https://aion.byop.dev/logbook/",
-  "baseUrl": "https://aion.byop.dev/logbook/",
-  "adminUrl": ""
+  "identityProviderMappers": [],
+  "groups": [],
+  "users": []
 }

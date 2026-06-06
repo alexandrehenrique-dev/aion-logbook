@@ -21,7 +21,7 @@ jobs:
     env:
       DEPLOY_PATH: ${{ vars.AION_DEPLOY_PATH || '/opt/genesis-lab/services/aion-logbook' }}
       DEPLOY_BRANCH: ${{ vars.AION_DEPLOY_BRANCH || 'develop' }}
-      APP_HEALTHCHECK_URL: http://192.168.0.77/logbook/
+      APP_HEALTHCHECK_URL: https://aion.byop.dev/logbook/
 
     steps:
       - name: Mostrar contexto do runner
